@@ -1,0 +1,27 @@
+{
+  "package": "com.akinon.lulushopping",
+  "description": "Lulu home (landing) page: top of page, banner motion, then 7 scrolls down (dragging above the floating View cart pill, which swallows drags). Read-only.",
+  "steps": [
+    { "action": "launch", "fresh": true, "wait": 8 },
+    { "action": "capture", "label": "home" },
+    { "action": "record", "label": "home_motion", "seconds": 14, "steps": [
+      { "action": "wait", "seconds": 6 },
+      { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 250], "ms": 900, "wait": 3 },
+      { "action": "swipe", "from_dp": [196, 250], "to_dp": [196, 600], "ms": 900, "wait": 3 }
+    ] },
+    { "action": "swipe", "from_dp": [196, 620], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "home" },
+    { "action": "swipe", "from_dp": [196, 620], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "home" },
+    { "action": "swipe", "from_dp": [196, 620], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "home" },
+    { "action": "swipe", "from_dp": [196, 620], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "home" },
+    { "action": "swipe", "from_dp": [196, 620], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "home" },
+    { "action": "swipe", "from_dp": [196, 620], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "home" },
+    { "action": "swipe", "from_dp": [196, 620], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "home" }
+  ]
+}

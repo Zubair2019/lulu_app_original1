@@ -1,0 +1,1 @@
+{ "package": "com.akinon.lulushopping", "description": "Launch Lulu, switch to Hypermarket and capture. Read-only.", "steps": [ { "action": "launch", "fresh": true, "wait": 10 }, { "action": "tap", "exact": "Hypermarket", "within": [0, 36, 160, 90], "seek": false, "wait": 8 }, { "action": "capture", "label": "now", "still": false } ] }

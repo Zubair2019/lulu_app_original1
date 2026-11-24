@@ -1,0 +1,13 @@
+{
+  "destination": {
+    "package": "com.democart.app",
+    "build": "powershell -ExecutionPolicy Bypass -File build.ps1 -Install",
+    "theme_files": [
+      "app/src/main/java/com/freshcart/shop/ui/Theme.kt"
+    ],
+    "source_dirs": [
+      "app/src/main/java"
+    ]
+  },
+  "redact": []
+}

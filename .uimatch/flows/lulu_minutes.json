@@ -1,0 +1,99 @@
+{
+    "package":  "com.akinon.lulushopping",
+    "description":  "Lulu Minutes (quick commerce) section: top of page then 4 scrolls (drags kept above the floating View cart pill). Read-only.",
+    "steps":  [
+                  {
+                      "fresh":  true,
+                      "action":  "launch",
+                      "wait":  8
+                  },
+                  {
+                      "label":  "minutes_switch",
+                      "seconds":  8,
+                      "steps":  [
+                                    {
+                                        "seconds":  1,
+                                        "action":  "wait"
+                                    },
+                                    {
+                                        "wait":  6,
+                                        "action":  "tap",
+                                        "exact":  "Minutes"
+                                    }
+                                ],
+                      "action":  "record"
+                  },
+                  {
+                      "label":  "minutes",
+                      "action":  "capture"
+                  },
+                  {
+                      "wait":  2,
+                      "to_dp":  [
+                                    196,
+                                    160
+                                ],
+                      "from_dp":  [
+                                      196,
+                                      600
+                                  ],
+                      "action":  "swipe",
+                      "ms":  900
+                  },
+                  {
+                      "label":  "minutes",
+                      "action":  "capture"
+                  },
+                  {
+                      "wait":  2,
+                      "to_dp":  [
+                                    196,
+                                    160
+                                ],
+                      "from_dp":  [
+                                      196,
+                                      600
+                                  ],
+                      "action":  "swipe",
+                      "ms":  900
+                  },
+                  {
+                      "label":  "minutes",
+                      "action":  "capture"
+                  },
+                  {
+                      "wait":  2,
+                      "to_dp":  [
+                                    196,
+                                    160
+                                ],
+                      "from_dp":  [
+                                      196,
+                                      600
+                                  ],
+                      "action":  "swipe",
+                      "ms":  900
+                  },
+                  {
+                      "label":  "minutes",
+                      "action":  "capture"
+                  },
+                  {
+                      "wait":  2,
+                      "to_dp":  [
+                                    196,
+                                    160
+                                ],
+                      "from_dp":  [
+                                      196,
+                                      600
+                                  ],
+                      "action":  "swipe",
+                      "ms":  900
+                  },
+                  {
+                      "label":  "minutes",
+                      "action":  "capture"
+                  }
+              ]
+}

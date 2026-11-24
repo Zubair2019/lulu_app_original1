@@ -1,0 +1,31 @@
+{
+  "package": "com.akinon.lulushopping",
+  "description": "Lulu cart and checkout up to the payment step: open the cart from the View cart pill, capture with scrolls, go to checkout, capture, continue to the payment options and capture. Never taps the final payment button.",
+  "steps": [
+    { "action": "launch", "fresh": false, "wait": 4 },
+    { "action": "tap", "text": "View cart", "seek": false, "wait": 5 },
+    { "action": "capture", "label": "cart" },
+    { "action": "swipe", "from_dp": [196, 560], "to_dp": [196, 180], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "cart" },
+    { "action": "swipe", "from_dp": [196, 560], "to_dp": [196, 180], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "cart" },
+    { "action": "swipe", "from_dp": [196, 560], "to_dp": [196, 180], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "cart" },
+    { "action": "tap", "match": "(?i)\\b(checkout|proceed to checkout|go to checkout)\\b", "seek": "down", "wait": 5 },
+    { "action": "capture", "label": "checkout" },
+    { "action": "swipe", "from_dp": [196, 560], "to_dp": [196, 180], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "checkout" },
+    { "action": "swipe", "from_dp": [196, 560], "to_dp": [196, 180], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "checkout" },
+    { "action": "swipe", "from_dp": [196, 560], "to_dp": [196, 180], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "checkout" },
+    { "action": "swipe", "from_dp": [196, 560], "to_dp": [196, 180], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "checkout" },
+    { "action": "tap", "match": "(?i)\\b(continue|continue to payment|proceed to payment|select payment|next)\\b", "optional": true, "wait": 5 },
+    { "action": "capture", "label": "payment" },
+    { "action": "swipe", "from_dp": [196, 560], "to_dp": [196, 180], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "payment" },
+    { "action": "swipe", "from_dp": [196, 560], "to_dp": [196, 180], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "payment" }
+  ]
+}

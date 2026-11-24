@@ -1,0 +1,88 @@
+{
+    "package":  "com.akinon.lulushopping",
+    "description":  "Lulu Buy Again tab: top of page then 4 scrolls (drags kept above the floating View cart pill). Read-only.",
+    "steps":  [
+                  {
+                      "fresh":  true,
+                      "action":  "launch",
+                      "wait":  8
+                  },
+                  {
+                      "wait":  4,
+                      "action":  "tap",
+                      "exact":  "Buy Again"
+                  },
+                  {
+                      "label":  "buyagain",
+                      "action":  "capture"
+                  },
+                  {
+                      "wait":  2,
+                      "to_dp":  [
+                                    196,
+                                    160
+                                ],
+                      "from_dp":  [
+                                      196,
+                                      600
+                                  ],
+                      "action":  "swipe",
+                      "ms":  900
+                  },
+                  {
+                      "label":  "buyagain",
+                      "action":  "capture"
+                  },
+                  {
+                      "wait":  2,
+                      "to_dp":  [
+                                    196,
+                                    160
+                                ],
+                      "from_dp":  [
+                                      196,
+                                      600
+                                  ],
+                      "action":  "swipe",
+                      "ms":  900
+                  },
+                  {
+                      "label":  "buyagain",
+                      "action":  "capture"
+                  },
+                  {
+                      "wait":  2,
+                      "to_dp":  [
+                                    196,
+                                    160
+                                ],
+                      "from_dp":  [
+                                      196,
+                                      600
+                                  ],
+                      "action":  "swipe",
+                      "ms":  900
+                  },
+                  {
+                      "label":  "buyagain",
+                      "action":  "capture"
+                  },
+                  {
+                      "wait":  2,
+                      "to_dp":  [
+                                    196,
+                                    160
+                                ],
+                      "from_dp":  [
+                                      196,
+                                      600
+                                  ],
+                      "action":  "swipe",
+                      "ms":  900
+                  },
+                  {
+                      "label":  "buyagain",
+                      "action":  "capture"
+                  }
+              ]
+}

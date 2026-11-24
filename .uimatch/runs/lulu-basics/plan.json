@@ -1,0 +1,41 @@
+{
+  "name": "home-header",
+  "source": {"capture": "latest:lulu_home", "screen": "home_00"},
+  "dest":   {"capture": "latest:democart_home", "screen": "home_00"},
+  "anchor": "tab_hyper",
+  "parts": [
+    {"name": "tab_hyper", "kind": "box", "source": {"exact": "Hypermarket", "index": 0}, "dest": {"id": "store_hypermarket"},
+     "checks": ["x", "y", "w", "h"]},
+    {"name": "tab_minutes", "kind": "box", "source": {"exact": "Minutes", "index": 0}, "dest": {"id": "store_minutes"},
+     "checks": ["x", "y", "w", "h"]},
+    {"name": "tab_money", "kind": "box", "source": {"exact": "Send Money", "within": [240, 36, 393, 90], "index": 0}, "dest": {"id": "store_money"},
+     "checks": ["x", "y", "w", "h"]},
+    {"name": "tab_minutes_label", "kind": "text", "letters": "lower",
+     "source": {"in_part": "tab_minutes", "offset_dp": [36, 8, 102, 32]}, "dest": {"in_part": "tab_minutes", "offset_dp": [36, 8, 102, 32]},
+     "checks": ["ink_h", "weight"]},
+    {"name": "delivery", "kind": "text", "source": {"match": "^Today, "}, "dest": {"match": "^Today, "},
+     "checks": ["x", "y", "ink_h", "weight"]},
+    {"name": "search_box", "kind": "box", "source": {"text": "Search for"}, "dest": {"id": "search_field"},
+     "checks": ["x", "y", "w", "h", "radius"]},
+    {"name": "search_word", "kind": "text", "letters": "lower",
+     "source": {"in_part": "search_box", "offset_dp": [33, 7, 82, 29]}, "dest": {"in_part": "search_box", "offset_dp": [33, 7, 82, 29]},
+     "checks": ["x", "ink_h", "weight"]},
+    {"name": "chip_gifting", "kind": "box", "source": {"exact": "Gifting Store", "index": 0}, "dest": {"id": "chip_1"},
+     "checks": ["x", "y", "w", "h"]},
+    {"name": "chip_gifting_label", "kind": "text", "letters": "lower",
+     "source": {"in_part": "chip_gifting", "offset_dp": [8, 40, 82, 60]}, "dest": {"in_part": "chip_gifting", "offset_dp": [8, 40, 82, 60]},
+     "checks": ["ink_h", "weight"]},
+    {"name": "nav_categories", "kind": "box", "source": {"exact": "Categories", "index": 0}, "dest": {"id": "nav_categories"},
+     "checks": ["x", "y", "w", "h"]},
+    {"name": "nav_categories_label", "kind": "text", "letters": "lower",
+     "source": {"in_part": "nav_categories", "offset_dp": [4, 32, 69, 48]}, "dest": {"in_part": "nav_categories", "offset_dp": [4, 32, 69, 48]},
+     "checks": ["ink_h", "weight", "color"]},
+    {"name": "nav_account", "kind": "box", "source": {"exact": "Account", "index": 0}, "dest": {"id": "nav_account"},
+     "checks": ["x", "y", "w", "h"]}
+  ],
+  "tolerance": {"x": 3, "y": 4, "w": 4, "h": 3, "radius": 3, "ink_h": 0.8},
+  "notes": [
+    "Text sizes were solved offline from the source's ink widths (tools/calibrate_type.py); ink_h here double-checks them.",
+    "Colours follow the source palette as the user asked for an exact copy (decision recorded in run.json)."
+  ]
+}

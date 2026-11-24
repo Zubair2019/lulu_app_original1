@@ -1,0 +1,17 @@
+{
+  "package": "com.democart.app",
+  "description": "Demo Cart Account tab (mirrors lulu_account).",
+  "steps": [
+    { "action": "launch", "fresh": true, "wait": 5 },
+    { "action": "tap", "id": "nav_account", "seek": false, "wait": 3 },
+    { "action": "capture", "label": "account" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "account" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "account" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "account" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "account" }
+  ]
+}

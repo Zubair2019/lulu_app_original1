@@ -1,0 +1,1436 @@
+{
+ "schema": 1,
+ "package": "com.democart.app",
+ "app_version": "1.0",
+ "next_id": 17,
+ "findings": [
+  {
+   "id": "R1",
+   "source": "audit",
+   "status": "dismissed",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161048",
+     "run": "lulu-basics",
+     "event": "dismissed"
+    }
+   ],
+   "check": "touch_target",
+   "fp": "touch_target|democart_home|add_d_124",
+   "category": "usability issue",
+   "severity": "high",
+   "confidence": "measured",
+   "title": "Touch targets smaller than 48 x 48 dp",
+   "evidence": "48.0 x 12.4 dp ('add_d_124') on home_02",
+   "expected": ">= 48 x 48 dp",
+   "guideline": "Touch targets of at least 48 x 48 dp (Material 3, Android accessibility); never under 24 x 24 dp (WCAG 2.2 SC 2.5.8). Small targets cause mis-taps, worst for one-handed use and motor impairments.",
+   "suggestion": "Give each a touch area of at least 48 x 48 dp; the visible shape can stay smaller (Compose: Modifier.minimumInteractiveComponentSize() or padding inside the clickable).",
+   "where": [
+    {
+     "screen": "home_02",
+     "box_px": [
+      215,
+      310,
+      347,
+      344
+     ],
+     "box_dp": [
+      78.2,
+      112.7,
+      48.0,
+      12.4
+     ],
+     "label": "add_d_124",
+     "element": "add_d_124",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "add_d_124"
+   ],
+   "count": 1,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_02"
+   ],
+   "decided": "20261124_161048",
+   "note": "R1/R2: the add buttons are cut off by the top edge of the screen in home_02, so only 12.4 dp of a 32 dp button is measured. R11: the flagged texts are banner artwork lettering (MEGA, up to, 70% OFF, FRESH15), not section titles."
+  },
+  {
+   "id": "R2",
+   "source": "audit",
+   "status": "dismissed",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161048",
+     "run": "lulu-basics",
+     "event": "dismissed"
+    }
+   ],
+   "check": "touch_target",
+   "fp": "touch_target|democart_home|add_d_104",
+   "category": "usability issue",
+   "severity": "high",
+   "confidence": "measured",
+   "title": "Touch targets smaller than 48 x 48 dp",
+   "evidence": "48.0 x 12.4 dp ('add_d_104') on home_02",
+   "expected": ">= 48 x 48 dp",
+   "guideline": "Touch targets of at least 48 x 48 dp (Material 3, Android accessibility); never under 24 x 24 dp (WCAG 2.2 SC 2.5.8). Small targets cause mis-taps, worst for one-handed use and motor impairments.",
+   "suggestion": "Give each a touch area of at least 48 x 48 dp; the visible shape can stay smaller (Compose: Modifier.minimumInteractiveComponentSize() or padding inside the clickable).",
+   "where": [
+    {
+     "screen": "home_02",
+     "box_px": [
+      903,
+      310,
+      1035,
+      344
+     ],
+     "box_dp": [
+      328.4,
+      112.7,
+      48.0,
+      12.4
+     ],
+     "label": "add_d_104",
+     "element": "add_d_104",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "add_d_104"
+   ],
+   "count": 1,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_02"
+   ],
+   "decided": "20261124_161048",
+   "note": "R1/R2: the add buttons are cut off by the top edge of the screen in home_02, so only 12.4 dp of a 32 dp button is measured. R11: the flagged texts are banner artwork lettering (MEGA, up to, 70% OFF, FRESH15), not section titles."
+  },
+  {
+   "id": "R3",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "text_size",
+   "fp": "text_size|democart_home|#101010",
+   "category": "usability issue",
+   "severity": "medium",
+   "confidence": "measured",
+   "title": "Text smaller than 11 sp",
+   "evidence": "about 10.4 sp; 8 elements ('Super Deals', 'Appliances', 'Fruits & Veg', 'with partner bank cards · T&C apply' and 3 more) on home_00, home_01, home_02",
+   "expected": ">= 11 sp",
+   "guideline": "Body text 12 sp or more and nothing under 11 sp (Material 3 type scale). Tiny text strains reading and is the first thing to break at large font sizes.",
+   "suggestion": "Use 11 sp or more (12 sp+ for anything people must read), from the type tokens.",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      42,
+      1076,
+      193,
+      1113
+     ],
+     "box_dp": [
+      15.3,
+      391.3,
+      54.9,
+      13.5
+     ],
+     "label": "Super Deals",
+     "element": "Super Deals",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      510,
+      1076,
+      647,
+      1113
+     ],
+     "box_dp": [
+      185.5,
+      391.3,
+      49.8,
+      13.5
+     ],
+     "label": "Appliances",
+     "element": "Appliances",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      978,
+      1076,
+      1080,
+      1113
+     ],
+     "box_dp": [
+      355.6,
+      391.3,
+      37.1,
+      13.5
+     ],
+     "label": "Fruits & Veg",
+     "element": "Fruits & Veg",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      311,
+      2049,
+      769,
+      2086
+     ],
+     "box_dp": [
+      113.1,
+      745.1,
+      166.5,
+      13.5
+     ],
+     "label": "with partner bank cards · T&C apply",
+     "element": "with partner bank cards · T&C apply",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_01",
+     "box_px": [
+      311,
+      640,
+      769,
+      677
+     ],
+     "box_dp": [
+      113.1,
+      232.7,
+      166.5,
+      13.5
+     ],
+     "label": "with partner bank cards · T&C apply",
+     "element": "with partner bank cards · T&C apply",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_01",
+     "box_px": [
+      1073,
+      1223,
+      1080,
+      1310
+     ],
+     "box_dp": [
+      390.2,
+      444.7,
+      2.5,
+      31.6
+     ],
+     "label": "Selfie Lamp with iPhone",
+     "element": "Selfie Lamp with iPhone",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_02",
+     "box_px": [
+      1073,
+      1174,
+      1080,
+      1261
+     ],
+     "box_dp": [
+      390.2,
+      426.9,
+      2.5,
+      31.6
+     ],
+     "label": "Samsung Galaxy Tab White",
+     "element": "Samsung Galaxy Tab White",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_02",
+     "box_px": [
+      1073,
+      1713,
+      1080,
+      1800
+     ],
+     "box_dp": [
+      390.2,
+      622.9,
+      2.5,
+      31.6
+     ],
+     "label": "Apple MagSafe Battery Pack",
+     "element": "Apple MagSafe Battery Pack",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "Super Deals",
+    "Appliances",
+    "Fruits & Veg",
+    "with partner bank cards · T&C apply",
+    "Selfie Lamp with iPhone",
+    "Samsung Galaxy Tab White",
+    "Apple MagSafe Battery Pack"
+   ],
+   "count": 8,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00",
+    "democart_home/home_01",
+    "democart_home/home_02"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R4",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "text_size",
+   "fp": "text_size|democart_home|#506060",
+   "category": "usability issue",
+   "severity": "medium",
+   "confidence": "measured",
+   "title": "Text smaller than 11 sp",
+   "evidence": "about 9.1 sp; 5 elements ('37.50', '69.50', '91.50', '59.50') on home_01, home_02",
+   "expected": ">= 11 sp",
+   "guideline": "Body text 12 sp or more and nothing under 11 sp (Material 3 type scale). Tiny text strains reading and is the first thing to break at large font sizes.",
+   "suggestion": "Use 11 sp or more (12 sp+ for anything people must read), from the type tokens.",
+   "where": [
+    {
+     "screen": "home_01",
+     "box_px": [
+      181,
+      1344,
+      239,
+      1376
+     ],
+     "box_dp": [
+      65.8,
+      488.7,
+      21.1,
+      11.6
+     ],
+     "label": "37.50",
+     "element": "37.50",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_01",
+     "box_px": [
+      874,
+      1344,
+      934,
+      1376
+     ],
+     "box_dp": [
+      317.8,
+      488.7,
+      21.8,
+      11.6
+     ],
+     "label": "69.50",
+     "element": "69.50",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_01",
+     "box_px": [
+      871,
+      1883,
+      929,
+      1915
+     ],
+     "box_dp": [
+      316.7,
+      684.7,
+      21.1,
+      11.6
+     ],
+     "label": "91.50",
+     "element": "91.50",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_02",
+     "box_px": [
+      871,
+      475,
+      929,
+      507
+     ],
+     "box_dp": [
+      316.7,
+      172.7,
+      21.1,
+      11.6
+     ],
+     "label": "91.50",
+     "element": "91.50",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_02",
+     "box_px": [
+      177,
+      1295,
+      237,
+      1327
+     ],
+     "box_dp": [
+      64.4,
+      470.9,
+      21.8,
+      11.6
+     ],
+     "label": "59.50",
+     "element": "59.50",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "37.50",
+    "69.50",
+    "91.50",
+    "59.50"
+   ],
+   "count": 5,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_01",
+    "democart_home/home_02"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R5",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "contrast",
+   "fp": "contrast|democart_home|#FFE0E0/#E01010",
+   "category": "design flaw",
+   "severity": "medium",
+   "confidence": "measured",
+   "title": "Text below WCAG AA contrast",
+   "evidence": "3.79:1 (#F9DBDC on #E10F11); 2 elements ('15', 'Off') on home_00",
+   "expected": ">= 4.5:1",
+   "guideline": "Text contrast of at least 4.5:1, or 3:1 for large text (18 sp+, or 14 sp+ bold) (WCAG 2.2 SC 1.4.3). Low contrast is hard to read outdoors and for low-vision users.",
+   "suggestion": "Darken the text (or lighten its background) until it reaches the ratio; use an existing text colour token that passes.",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      153,
+      1467,
+      255,
+      1576
+     ],
+     "box_dp": [
+      55.6,
+      533.5,
+      37.1,
+      39.6
+     ],
+     "label": "15",
+     "element": "15",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      255,
+      1522,
+      315,
+      1565
+     ],
+     "box_dp": [
+      92.7,
+      553.5,
+      21.8,
+      15.6
+     ],
+     "label": "Off",
+     "element": "Off",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "15",
+    "Off"
+   ],
+   "count": 2,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R6",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "text_size",
+   "fp": "text_size|democart_home|#203070",
+   "category": "usability issue",
+   "severity": "medium",
+   "confidence": "measured",
+   "title": "Text smaller than 11 sp",
+   "evidence": "about 7.1 sp; 2 elements ('45% OFF') on home_00, home_01",
+   "expected": ">= 11 sp",
+   "guideline": "Body text 12 sp or more and nothing under 11 sp (Material 3 type scale). Tiny text strains reading and is the first thing to break at large font sizes.",
+   "suggestion": "Use 11 sp or more (12 sp+ for anything people must read), from the type tokens.",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      1071,
+      2151,
+      1080,
+      2190
+     ],
+     "box_dp": [
+      389.5,
+      782.2,
+      3.3,
+      14.2
+     ],
+     "label": "45% OFF",
+     "element": "45% OFF",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_01",
+     "box_px": [
+      1071,
+      742,
+      1080,
+      781
+     ],
+     "box_dp": [
+      389.5,
+      269.8,
+      3.3,
+      14.2
+     ],
+     "label": "45% OFF",
+     "element": "45% OFF",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "45% OFF"
+   ],
+   "count": 2,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00",
+    "democart_home/home_01"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R7",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "contrast",
+   "fp": "contrast|democart_home|#FFC030/#D03030",
+   "category": "design flaw",
+   "severity": "medium",
+   "confidence": "measured",
+   "title": "Text below WCAG AA contrast",
+   "evidence": "3.17:1 (#FDC836 on #D62C30) ('70') on home_00",
+   "expected": ">= 4.5:1",
+   "guideline": "Text contrast of at least 4.5:1, or 3:1 for large text (18 sp+, or 14 sp+ bold) (WCAG 2.2 SC 1.4.3). Low contrast is hard to read outdoors and for low-vision users.",
+   "suggestion": "Darken the text (or lighten its background) until it reaches the ratio; use an existing text colour token that passes.",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      452,
+      745,
+      685,
+      999
+     ],
+     "box_dp": [
+      164.4,
+      270.9,
+      84.7,
+      92.4
+     ],
+     "label": "70",
+     "element": "70",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "70"
+   ],
+   "count": 1,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R8",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "contrast",
+   "fp": "contrast|democart_home|#F0E0E0/#E01010",
+   "category": "design flaw",
+   "severity": "medium",
+   "confidence": "measured",
+   "title": "Text below WCAG AA contrast",
+   "evidence": "3.85:1 (#F7D9DA on #DD0C0C) ('Flat') on home_00",
+   "expected": ">= 4.5:1",
+   "guideline": "Text contrast of at least 4.5:1, or 3:1 for large text (18 sp+, or 14 sp+ bold) (WCAG 2.2 SC 1.4.3). Low contrast is hard to read outdoors and for low-vision users.",
+   "suggestion": "Darken the text (or lighten its background) until it reaches the ratio; use an existing text colour token that passes.",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      78,
+      1420,
+      140,
+      1467
+     ],
+     "box_dp": [
+      28.4,
+      516.4,
+      22.5,
+      17.1
+     ],
+     "label": "Flat",
+     "element": "Flat",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "Flat"
+   ],
+   "count": 1,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R9",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "contrast",
+   "fp": "contrast|democart_home|#607080/#F0F0F0",
+   "category": "design flaw",
+   "severity": "medium",
+   "confidence": "measured",
+   "title": "Text below WCAG AA contrast",
+   "evidence": "4.45:1 (#686E7B on #EFEFF0) ('\"headphones|\"') on home_00",
+   "expected": ">= 4.5:1",
+   "guideline": "Text contrast of at least 4.5:1, or 3:1 for large text (18 sp+, or 14 sp+ bold) (WCAG 2.2 SC 1.4.3). Low contrast is hard to read outdoors and for low-vision users.",
+   "suggestion": "Darken the text (or lighten its background) until it reaches the ratio; use an existing text colour token that passes.",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      275,
+      341,
+      537,
+      394
+     ],
+     "box_dp": [
+      100.0,
+      124.0,
+      95.3,
+      19.3
+     ],
+     "label": "\"headphones|\"",
+     "element": "\"headphones|\"",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "\"headphones|\""
+   ],
+   "count": 1,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R10",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "text_size",
+   "fp": "text_size|democart_home|#505060",
+   "category": "usability issue",
+   "severity": "medium",
+   "confidence": "measured",
+   "title": "Text smaller than 11 sp",
+   "evidence": "about 9.1 sp ('438.00') on home_02",
+   "expected": ">= 11 sp",
+   "guideline": "Body text 12 sp or more and nothing under 11 sp (Material 3 type scale). Tiny text strains reading and is the first thing to break at large font sizes.",
+   "suggestion": "Use 11 sp or more (12 sp+ for anything people must read), from the type tokens.",
+   "where": [
+    {
+     "screen": "home_02",
+     "box_px": [
+      555,
+      1834,
+      632,
+      1866
+     ],
+     "box_dp": [
+      201.8,
+      666.9,
+      28.0,
+      11.6
+     ],
+     "label": "438.00",
+     "element": "438.00",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "438.00"
+   ],
+   "count": 1,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_02"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R11",
+   "source": "audit",
+   "status": "dismissed",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161048",
+     "run": "lulu-basics",
+     "event": "dismissed"
+    }
+   ],
+   "check": "headings",
+   "fp": "headings|democart_home|titles",
+   "category": "poor hierarchy",
+   "severity": "low",
+   "confidence": "measured",
+   "title": "Section titles not marked as headings",
+   "evidence": "about 48.5 sp, not a heading; 12 elements ('MEGA', 'up to', 'ON SELECTED ITEMS', 'FRESH15' and 4 more) on home_00, home_01, home_02",
+   "expected": "marked as heading",
+   "guideline": "Mark section titles as headings so screen-reader users can jump between sections (WCAG 2.2 SC 1.3.1 and 2.4.6; Compose: Modifier.semantics { heading() }).",
+   "suggestion": "Mark them as headings (Compose: Modifier.semantics { heading() }).",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      76,
+      670,
+      364,
+      823
+     ],
+     "box_dp": [
+      27.6,
+      243.6,
+      104.7,
+      55.6
+     ],
+     "label": "MEGA",
+     "element": "MEGA",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      444,
+      671,
+      604,
+      767
+     ],
+     "box_dp": [
+      161.5,
+      244.0,
+      58.2,
+      34.9
+     ],
+     "label": "up to",
+     "element": "up to",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      680,
+      903,
+      904,
+      955
+     ],
+     "box_dp": [
+      247.3,
+      328.4,
+      81.5,
+      18.9
+     ],
+     "label": "ON SELECTED ITEMS",
+     "element": "ON SELECTED ITEMS",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      729,
+      1480,
+      969,
+      1553
+     ],
+     "box_dp": [
+      265.1,
+      538.2,
+      87.3,
+      26.5
+     ],
+     "label": "FRESH15",
+     "element": "FRESH15",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      379,
+      1675,
+      531,
+      1748
+     ],
+     "box_dp": [
+      137.8,
+      609.1,
+      55.3,
+      26.5
+     ],
+     "label": "FLAT",
+     "element": "FLAT",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      583,
+      1675,
+      701,
+      1748
+     ],
+     "box_dp": [
+      212.0,
+      609.1,
+      42.9,
+      26.5
+     ],
+     "label": "500",
+     "element": "500",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      385,
+      1748,
+      695,
+      1886
+     ],
+     "box_dp": [
+      140.0,
+      635.6,
+      112.7,
+      50.2
+     ],
+     "label": "MEGA",
+     "element": "MEGA",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_00",
+     "box_px": [
+      241,
+      1886,
+      839,
+      2024
+     ],
+     "box_dp": [
+      87.6,
+      685.8,
+      217.5,
+      50.2
+     ],
+     "label": "CASHBACK",
+     "element": "CASHBACK",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "MEGA",
+    "up to",
+    "ON SELECTED ITEMS",
+    "FRESH15",
+    "FLAT",
+    "500",
+    "CASHBACK",
+    "Mega Week Exclusive Deals"
+   ],
+   "count": 12,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00",
+    "democart_home/home_01",
+    "democart_home/home_02"
+   ],
+   "decided": "20261124_161048",
+   "note": "R1/R2: the add buttons are cut off by the top edge of the screen in home_02, so only 12.4 dp of a 32 dp button is measured. R11: the flagged texts are banner artwork lettering (MEGA, up to, 70% OFF, FRESH15), not section titles."
+  },
+  {
+   "id": "R12",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "alignment",
+   "fp": "alignment|democart_home|12.0vs15.0",
+   "category": "inconsistency",
+   "severity": "low",
+   "confidence": "measured",
+   "title": "Near-miss left alignment",
+   "evidence": "left edge 12.0 dp, 2 texts at 15.0 dp; 2 elements ('Mega Week Exclusive Deals') on home_01, home_02",
+   "expected": "same edge",
+   "guideline": "Edges meant to line up should line up exactly; 1-3 dp near-misses read as mistakes (alignment, 4 dp grid, Gestalt continuity).",
+   "suggestion": "Snap these to the shared edge, using the same padding token.",
+   "where": [
+    {
+     "screen": "home_01",
+     "box_px": [
+      33,
+      2154,
+      1047,
+      2219
+     ],
+     "box_dp": [
+      12.0,
+      783.3,
+      368.7,
+      23.6
+     ],
+     "label": "Mega Week Exclusive Deals",
+     "element": "Mega Week Exclusive Deals",
+     "flow": "democart_home"
+    },
+    {
+     "screen": "home_02",
+     "box_px": [
+      33,
+      746,
+      1047,
+      811
+     ],
+     "box_dp": [
+      12.0,
+      271.3,
+      368.7,
+      23.6
+     ],
+     "label": "Mega Week Exclusive Deals",
+     "element": "Mega Week Exclusive Deals",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "Mega Week Exclusive Deals"
+   ],
+   "count": 2,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_01",
+    "democart_home/home_02"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R13",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "touch_target",
+   "fp": "touch_target|democart_home|Dubai Marina, Dubai",
+   "category": "usability issue",
+   "severity": "low",
+   "confidence": "measured",
+   "title": "Touch targets smaller than 48 x 48 dp",
+   "evidence": "162.9 x 40.7 dp ('Dubai Marina, Dubai') on home_00",
+   "expected": ">= 48 x 48 dp",
+   "guideline": "Touch targets of at least 48 x 48 dp (Material 3, Android accessibility); never under 24 x 24 dp (WCAG 2.2 SC 2.5.8). Small targets cause mis-taps, worst for one-handed use and motor impairments.",
+   "suggestion": "Give each a touch area of at least 48 x 48 dp; the visible shape can stay smaller (Compose: Modifier.minimumInteractiveComponentSize() or padding inside the clickable).",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      585,
+      190,
+      1033,
+      302
+     ],
+     "box_dp": [
+      212.7,
+      69.1,
+      162.9,
+      40.7
+     ],
+     "label": "Dubai Marina, Dubai",
+     "element": "Dubai Marina, Dubai",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "Dubai Marina, Dubai"
+   ],
+   "count": 1,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R14",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "touch_target",
+   "fp": "touch_target|democart_home|search_field",
+   "category": "usability issue",
+   "severity": "low",
+   "confidence": "measured",
+   "title": "Touch targets smaller than 48 x 48 dp",
+   "evidence": "368.7 x 45.8 dp ('\"headphones|\" Search Search') on home_00",
+   "expected": ">= 48 x 48 dp",
+   "guideline": "Touch targets of at least 48 x 48 dp (Material 3, Android accessibility); never under 24 x 24 dp (WCAG 2.2 SC 2.5.8). Small targets cause mis-taps, worst for one-handed use and motor impairments.",
+   "suggestion": "Give each a touch area of at least 48 x 48 dp; the visible shape can stay smaller (Compose: Modifier.minimumInteractiveComponentSize() or padding inside the clickable).",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      28,
+      302,
+      1042,
+      428
+     ],
+     "box_dp": [
+      10.2,
+      109.8,
+      368.7,
+      45.8
+     ],
+     "label": "\"headphones|\" Search Search",
+     "element": "search_field",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "search_field",
+    "\"headphones|\" Search Search"
+   ],
+   "count": 1,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R15",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "target_spacing",
+   "fp": "target_spacing|democart_home|Dubai Marina, Dubai~search_field",
+   "category": "friction",
+   "severity": "low",
+   "confidence": "measured",
+   "title": "Touch targets closer than 8 dp",
+   "evidence": "0.0 dp from '\"headphones|\" Search Search' ('Dubai Marina, Dubai') on home_00",
+   "expected": ">= 8 dp apart",
+   "guideline": "Keep at least 8 dp between touch targets (Material 3), and never let targets overlap, so a tap can't land on the neighbour (Fitts's law, error prevention).",
+   "suggestion": "Add space between them (8 dp or more) or merge them into one larger target.",
+   "where": [
+    {
+     "screen": "home_00",
+     "box_px": [
+      585,
+      190,
+      1033,
+      302
+     ],
+     "box_dp": [
+      212.7,
+      69.1,
+      162.9,
+      40.7
+     ],
+     "label": "Dubai Marina, Dubai",
+     "element": "Dubai Marina, Dubai",
+     "flow": "democart_home"
+    }
+   ],
+   "elements": [
+    "Dubai Marina, Dubai"
+   ],
+   "count": 1,
+   "flow": "democart_home",
+   "screens": [
+    "democart_home/home_00"
+   ],
+   "decided": "20261124_161143"
+  },
+  {
+   "id": "R16",
+   "source": "audit",
+   "status": "declined",
+   "first_seen": "20261124_161032",
+   "last_seen": "20261124_161032",
+   "runs": [
+    "lulu-basics"
+   ],
+   "history": [
+    {
+     "time": "20261124_161032",
+     "run": "lulu-basics",
+     "event": "found"
+    },
+    {
+     "time": "20261124_161143",
+     "run": "lulu-basics",
+     "event": "declined"
+    }
+   ],
+   "check": "text_colors",
+   "fp": "text_colors|democart_home|app",
+   "flow": "democart_home",
+   "category": "visual clutter",
+   "severity": "low",
+   "confidence": "measured",
+   "title": "Too many text colours",
+   "evidence": "11 colours: #101010, #FFFFFF, #506060, #103070, #203070, #FFC030, #607080, #505060, #606070, #FFE0E0, #203040",
+   "expected": "",
+   "guideline": "Give text a few colour roles (primary, secondary, accent, on-colour); many shades add noise without meaning (Material 3 colour roles, aesthetic-minimalist design).",
+   "suggestion": "Map each text colour to a role token and merge near-duplicates.",
+   "where": [],
+   "elements": [],
+   "count": 1,
+   "screens": [
+    "democart_home/home_00",
+    "democart_home/home_01",
+    "democart_home/home_02"
+   ],
+   "decided": "20261124_161143"
+  }
+ ],
+ "audits": [
+  {
+   "time": "20261124_161032",
+   "run": "lulu-basics",
+   "flow": "democart_home",
+   "capture": "D:\\lulu_app\\.uimatch\\captures\\democart_home\\20261124_160546",
+   "screens": [
+    "home_00",
+    "home_01",
+    "home_02"
+   ],
+   "metrics": {
+    "screens": 3,
+    "targets_checked": 53,
+    "targets_below_48dp": 4,
+    "smallest_target_dp": 12.4,
+    "texts_checked": 79,
+    "texts_below_aa": 5,
+    "lowest_contrast": 3.17,
+    "smallest_text_sp": 4.6,
+    "text_sizes_in_use": 9,
+    "text_colours_in_use": 11,
+    "headings": 0
+   },
+   "source_metrics": {
+    "screens": 8,
+    "targets_checked": 66,
+    "targets_below_48dp": 9,
+    "smallest_target_dp": 18.2,
+    "texts_checked": 89,
+    "texts_below_aa": 2,
+    "lowest_contrast": 2.84,
+    "smallest_text_sp": 2.8,
+    "text_sizes_in_use": 9,
+    "text_colours_in_use": 21,
+    "headings": 16
+   },
+   "board": "D:\\lulu_app\\.uimatch\\runs\\lulu-basics\\review\\20261124_161032\\board.png",
+   "new": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9",
+    "R10",
+    "R11",
+    "R12",
+    "R13",
+    "R14",
+    "R15",
+    "R16"
+   ],
+   "fixed": [],
+   "gone": [],
+   "back": [],
+   "known": [],
+   "copied_as_is": []
+  }
+ ],
+ "source_checks": [],
+ "updated": "2026-11-24 16:11:43"
+}

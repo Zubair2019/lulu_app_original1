@@ -1,0 +1,8 @@
+{
+  "package": "com.akinon.lulushopping",
+  "description": "Scroll test on the Lulu screen in front: capture, scroll once, capture. Read-only.",
+  "steps": [
+    { "action": "capture", "label": "before", "still": false },
+    { "action": "scroll", "times": 1, "fraction": 0.4, "label": "after", "settle": 2 }
+  ]
+}

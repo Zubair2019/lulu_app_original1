@@ -1,0 +1,60 @@
+{
+ "name": "lulu basics",
+ "goal": "Full redesign of FreshCart from the Lulu app's basics: home (6-7 scrolls), product page, cart, checkout up to payment, Minutes, Hypermart, Lulu Money, categories, account, buy again, deals (4 scrolls each), with working search.",
+ "source_package": "com.akinon.lulushopping",
+ "dest_package": "com.freshcart.shop",
+ "created": "2026-11-24 14:42:06",
+ "step": "verify",
+ "flows": {
+  "source": "lulu_home",
+  "dest": "democart_home"
+ },
+ "decisions": [
+  "App name: Demo Cart (package com.democart.app), chosen by the user.",
+  "User asked for the exact Lulu design including font sizes: match layout, sizes, spacing, text sizes, weights and the source colour palette.",
+  "Not copied: Lulu's font files, logo, brand name, banner artwork, product photos and campaign wording. Closest open font: IBM Plex Sans (OFL), sizes solved from measured ink widths.",
+  "Images: DummyJSON demo product photos plus Open Food Facts / Wikimedia Commons photos (credits in IMAGE_CREDITS.md).",
+  "Checkout stops at the payment section; card fields are non-editable; demo orders only with Cash on Delivery.",
+  "Review dismissed: R1 Touch targets smaller than 48 x 48 dp; R2 Touch targets smaller than 48 x 48 dp; R11 Section titles not marked as headings",
+  "Review declined: R3 Text smaller than 11 sp; R4 Text smaller than 11 sp; R5 Text below WCAG AA contrast; R6 Text smaller than 11 sp; R7 Text below WCAG AA contrast; R8 Text below WCAG AA contrast; R9 Text below WCAG AA contrast; R10 Text smaller than 11 sp; R12 Near-miss left alignment; R13 Touch targets smaller than 48 x 48 dp; R14 Touch targets smaller than 48 x 48 dp; R15 Touch targets closer than 8 dp; R16 Too many text colours"
+ ],
+ "verifies": [
+  {
+   "time": "20261124_160748",
+   "passed": 27,
+   "failed": 15,
+   "out": "D:\\lulu_app\\.uimatch\\runs\\lulu-basics\\verify\\20261124_160748",
+   "dest_capture": "D:\\lulu_app\\.uimatch\\captures\\democart_home\\20261124_160546"
+  },
+  {
+   "time": "20261124_161355",
+   "passed": 37,
+   "failed": 5,
+   "out": "D:\\lulu_app\\.uimatch\\runs\\lulu-basics\\verify\\20261124_161355",
+   "dest_capture": "D:\\lulu_app\\.uimatch\\captures\\democart_home\\20261124_161153"
+  },
+  {
+   "time": "20261124_161451",
+   "passed": 3,
+   "failed": 9,
+   "out": "D:\\lulu_app\\.uimatch\\runs\\lulu-basics\\verify\\20261124_161451",
+   "dest_capture": "D:\\lulu_app\\.uimatch\\captures\\democart_home\\20261124_161153"
+  }
+ ],
+ "notes": [
+  "Lulu restores the last store on launch; its View cart pill swallows drags at 78% height, so flows drag from 600 dp.",
+  "uimatch flow tap: a regex anchored with ^ can't match an element whose text is empty (haystack starts with a space).",
+  "Portal ping can take more than 5 s on this phone; tools/flow.py waits longer."
+ ],
+ "updated": "2026-11-24 16:14:52",
+ "review": {
+  "pending": 0,
+  "approved": 0,
+  "declined": 13,
+  "dismissed": 3,
+  "fixed": 0,
+  "gone": 0,
+  "to_build": [],
+  "register": "D:\\lulu_app\\.uimatch\\findings.json"
+ }
+}

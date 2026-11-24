@@ -1,0 +1,9 @@
+{
+  "package": "com.akinon.lulushopping",
+  "description": "Lulu search: open the search screen from the home search field and capture it. Read-only.",
+  "steps": [
+    { "action": "launch", "fresh": true, "wait": 8 },
+    { "action": "tap", "text": "Search for", "within": [0, 100, 393, 170], "wait": 3 },
+    { "action": "capture", "label": "search", "still": false }
+  ]
+}

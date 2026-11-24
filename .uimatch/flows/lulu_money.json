@@ -1,0 +1,20 @@
+{
+  "package": "com.akinon.lulushopping",
+  "description": "Lulu Send Money section: tap the store tab (hidden screens also carry 'Send Money' labels, so the tap is limited to the tab row), then 4 scrolls. Read-only.",
+  "steps": [
+    { "action": "launch", "fresh": true, "wait": 8 },
+    { "action": "record", "label": "money_switch", "seconds": 8, "steps": [
+      { "action": "wait", "seconds": 1 },
+      { "action": "tap", "exact": "Send Money", "within": [250, 36, 393, 90], "wait": 6 }
+    ] },
+    { "action": "capture", "label": "money" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "money" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "money" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "money" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "money" }
+  ]
+}

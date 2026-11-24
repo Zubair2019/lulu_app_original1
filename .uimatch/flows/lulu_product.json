@@ -1,0 +1,20 @@
+{
+  "package": "com.akinon.lulushopping",
+  "description": "Lulu product page: scroll home to a product rail, open the first discounted product, capture with 4 scrolls, then Add to cart and capture the stepper.",
+  "steps": [
+    { "action": "launch", "fresh": true, "wait": 8 },
+    { "action": "swipe", "from_dp": [196, 620], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "tap", "match": "^\\d+% OFF$", "pick": "center", "wait": 4 },
+    { "action": "capture", "label": "pdp" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "pdp" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "pdp" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "pdp" },
+    { "action": "swipe", "from_dp": [196, 600], "to_dp": [196, 160], "ms": 900, "wait": 2 },
+    { "action": "capture", "label": "pdp" },
+    { "action": "tap", "match": "(?i)^add to cart$", "wait": 3 },
+    { "action": "capture", "label": "pdp_added" }
+  ]
+}
