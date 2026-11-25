@@ -50,6 +50,12 @@ object C {
     val Money = Color(0xFF0E5A9C)          // Demo Cart Money accent
     val Minutes = Color(0xFF6B21A8)        // Minutes accent (quick commerce)
     val MinutesSoft = Color(0xFFF3E8FF)
+    val TabLift = Color(0x24FFFFFF)        // lifted ground of the selected store tab and the block it grows from
+    val TabEdge = Color(0x59FFFFFF)        // its hairline edge
+    val Slab = Color(0xFF1B1C1E)           // dark slab behind campaign words, close button
+    val Scrim = Color(0x8C000000)          // dimmed list behind the product sheet
+    val NavPill = Color(0xFFDADADA)        // selected item of the bottom bar
+    val Star = Color(0xFFF5A623)
 }
 
 object D {
@@ -60,6 +66,27 @@ object D {
     val NavH = 64.dp
     val CardW = 112.dp
     val Radius = 12.dp
+    val CardUnitGap = 2.dp      // product card: name to the pack-size line
+    val CardPriceGap = 4.dp     // product card: pack-size line to the price
+    val CardH = 200.dp          // a 117 dp wide product card: 117 picture + 7 + 32 name + 2 + 14 pack size + 4 + 19.6 price + 4.4
+    val Touch = 48.dp           // smallest touch area for anything tappable
+
+    // Layout of the redesigned screens, in dp on a 393 dp wide phone (measured on the reference layouts).
+    val Side = 16.dp            // side margin of the home and product pages
+    val AddrH = 56.dp           // address row at the top of a store
+    val BigTabH = 70.dp         // store tabs: pictogram over label
+    val SearchTall = 56.dp      // search field
+    val TextTabH = 48.dp        // second tab row (40 dp on the reference; raised to the touch floor)
+    val R12 = 12.dp
+    val R16 = 16.dp
+    val R20 = 20.dp
+    val R24 = 24.dp
+    val TileW = 96.dp           // offer tiles under the campaign strip
+    val TileH = 114.dp
+    val DishW = 108.dp          // product card inside a deal shelf
+    val RailW = 86.dp           // aisle page: side rail of sections
+    val RailItemH = 91.dp
+    val GridGap = 12.dp         // aisle page: gap between product cards
 }
 
 /**
@@ -84,6 +111,13 @@ object T {
     val smallM = TextStyle(fontFamily = Plex, fontSize = 12.sp, fontWeight = FontWeight.Medium, lineHeight = 16.sp)
     val tiny = TextStyle(fontFamily = Plex, fontSize = 10.sp, fontWeight = FontWeight.Medium, lineHeight = 13.sp)
     val cardName = TextStyle(fontFamily = Plex, fontSize = 12.sp, fontWeight = FontWeight.Normal, lineHeight = 16.sp)
+    val cardUnit = TextStyle(fontFamily = Plex, fontSize = 11.sp, fontWeight = FontWeight.Medium, lineHeight = 14.sp)
+    val addrLabel = TextStyle(fontFamily = Plex, fontSize = 17.sp, fontWeight = FontWeight.Bold, lineHeight = 22.sp)
+    val storeTab = TextStyle(fontFamily = Plex, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, lineHeight = 16.sp)
+    val textTab = TextStyle(fontFamily = Plex, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, lineHeight = 16.sp, letterSpacing = 0.4.sp)
+    val tile = TextStyle(fontFamily = Plex, fontSize = 12.sp, fontWeight = FontWeight.Bold, lineHeight = 14.sp)
+    val railLabel = TextStyle(fontFamily = Plex, fontSize = 11.sp, fontWeight = FontWeight.Medium, lineHeight = 14.sp)
+    val priceBig = TextStyle(fontFamily = Plex, fontSize = 18.sp, fontWeight = FontWeight.Bold, lineHeight = 24.sp)
     val price = TextStyle(fontFamily = Plex, fontSize = 14.8.sp, fontWeight = FontWeight.SemiBold, lineHeight = 19.6.sp)
     val strike = TextStyle(fontFamily = Plex, fontSize = 8.7.sp, fontWeight = FontWeight.Normal, lineHeight = 12.sp)
     val badge = TextStyle(fontFamily = Plex, fontSize = 10.85.sp, fontWeight = FontWeight.Bold, lineHeight = 19.3.sp)

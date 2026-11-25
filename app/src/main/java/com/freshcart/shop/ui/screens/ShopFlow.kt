@@ -2,6 +2,27 @@ package com.freshcart.shop.ui.screens
 
 
 import com.freshcart.shop.ui.Plex
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+import com.freshcart.shop.ui.hero
+import com.freshcart.shop.ui.SectionHeader
+import com.freshcart.shop.ui.RollingText
+import com.freshcart.shop.ui.ProductRail
+import com.freshcart.shop.ui.M
+import com.freshcart.shop.ui.AddKind
+import com.freshcart.shop.ui.AddButton
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
@@ -23,11 +44,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -86,7 +109,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -101,8 +126,8 @@ import com.freshcart.shop.data.Catalog
 import com.freshcart.shop.data.DEPT_NAMES
 import com.freshcart.shop.data.Product
 import com.freshcart.shop.data.Route
-import com.freshcart.shop.ui.BottomBar
 import com.freshcart.shop.ui.C
+import com.freshcart.shop.ui.D
 import com.freshcart.shop.ui.Dirham
 import com.freshcart.shop.ui.OldPrice
 import com.freshcart.shop.ui.Price
@@ -115,13 +140,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 // ---------------------------------------------------------------- shared bits
-
-@Composable
-private fun RoundIcon(icon: ImageVector, desc: String, tint: Color = C.Ink, onClick: () -> Unit) {
-    Box(Modifier.size(40.dp).shadow(2.dp, CircleShape).background(Color.White, CircleShape).clip(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(icon, desc, tint = tint, modifier = Modifier.size(20.dp))
-    }
-}
 
 @Composable
 private fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
@@ -142,6 +160,17 @@ private fun BlackPill(text: String, modifier: Modifier = Modifier, enabled: Bool
     ) { Text(text, style = T.smallM.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp), color = Color.White, maxLines = 1) }
 }
 
+/** Outlined pill, as on the address card, drawn 28 dp tall inside a touch area of at least 48 dp. */
+@Composable
+private fun PillAction(text: String, tag: String, onClick: () -> Unit) {
+    Box(
+        Modifier.heightIn(min = D.Touch).widthIn(min = D.Touch).clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp).testTag(tag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = T.small, color = C.Ink, maxLines = 1, modifier = Modifier.border(1.dp, C.Line, RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 6.dp))
+    }
+}
+
 @Composable
 private fun TopBar(title: String, centered: Boolean, onBack: () -> Unit) {
     Box(Modifier.fillMaxWidth().background(Color(0xFFF6F6F6)).statusBarsPadding().height(48.dp)) {
@@ -157,132 +186,169 @@ private fun TopBar(title: String, centered: Boolean, onBack: () -> Unit) {
 
 // ---------------------------------------------------------------- Product page
 
+/**
+ * The product page, drawn as a sheet over the screen it was opened from. A round close button floats above it.
+ * Top to bottom: the pictures; then the name, pack size and price on the left with ADD on the same line on the
+ * right; then when it can arrive, what it is, and similar products. A bar to the cart rises once something is in
+ * the cart. The strip with the handle at the top can be dragged down to send the sheet away.
+ */
 @Composable
-fun ProductScreen(state: AppState, id: String) {
-    val p = Catalog.get(id) ?: return
-    val similar = remember(id) { Catalog.dept(p.dept).filter { it.id != p.id }.sortedByDescending { it.offPercent }.take(12) }
-    var summary by remember { mutableStateOf(true) }
-    var description by remember { mutableStateOf(false) }
+fun ProductSheet(state: AppState, route: Route.ProductPage) {
+    val p = Catalog.get(route.id) ?: return
+    val similar = remember(p.id) { Catalog.dept(p.dept).filter { it.id != p.id }.sortedByDescending { it.offPercent }.take(12) }
+    var description by remember(p.id) { mutableStateOf(false) }
     val pager = rememberPagerState { 3 }
-    Box(Modifier.fillMaxSize().background(Color(0xFFF6F6F6))) {
-        LazyColumn(Modifier.fillMaxSize().testTag("pdp_list"), contentPadding = PaddingValues(bottom = 170.dp)) {
-            item {
-                Column(Modifier.fillMaxWidth().background(Color.White)) {
-                    HorizontalPager(pager, Modifier.fillMaxWidth().height(380.dp).statusBarsPadding()) { k ->
-                        Box(Modifier.fillMaxSize().padding(top = 44.dp, start = 24.dp, end = 24.dp, bottom = 8.dp), contentAlignment = Alignment.Center) {
-                            Image(painterResource(p.image), p.name, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(if (k == 0) 0.dp else 30.dp))
-                        }
-                    }
-                    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.Center) {
-                        repeat(3) { k ->
-                            Box(Modifier.padding(horizontal = 2.dp).width(if (k == pager.currentPage) 12.dp else 6.dp).height(6.dp)
-                                .background(if (k == pager.currentPage) C.Ink2 else Color(0xFFD6D6D8), RoundedCornerShape(3.dp)))
-                        }
-                    }
-                    Spacer(Modifier.height(18.dp))
-                }
+    val scope = rememberCoroutineScope()
+    val drag = remember(route) { Animatable(0f) }
+    val dismissAt = with(LocalDensity.current) { 140.dp.toPx() }
+    Box(Modifier.fillMaxSize()) {
+        Box(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 8.dp).size(D.Touch), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(40.dp).background(C.Slab, CircleShape).clip(CircleShape).clickable { state.back() }.testTag("pdp_close"), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Close, "Close", tint = Color.White, modifier = Modifier.size(20.dp))
             }
-            item {
-                Column(Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp).fillMaxWidth().shadow(1.dp, RoundedCornerShape(12.dp)).background(Color.White, RoundedCornerShape(12.dp)).padding(13.dp)) {
-                    Row(Modifier.clickable { state.go(Route.Listing(p.brand.ifBlank { DEPT_NAMES[p.dept] ?: "More" }, p.dept)) }, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Explore more from ${p.brand.ifBlank { DEPT_NAMES[p.dept] }}", style = T.small.copy(fontSize = 12.3.sp, fontWeight = FontWeight.Normal),
-                            color = Color(0xFF162A6F), textDecoration = TextDecoration.Underline)
-                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = Color(0xFF1F3C88), modifier = Modifier.size(14.dp))
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text("${p.name}${if (p.unit != "1 pc") " " + p.unit else ""}", style = TextStyle(fontFamily = Plex, fontSize = 15.sp, fontWeight = FontWeight.Bold, lineHeight = 21.1.sp), color = C.Ink)
-                    Spacer(Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Price(p.price, T.price.copy(fontSize = 15.sp), C.Ink, 11.dp)
+        }
+        Column(
+            Modifier.fillMaxSize().statusBarsPadding().padding(top = 64.dp)
+                .offset { IntOffset(0, drag.value.roundToInt()) }
+                .clip(RoundedCornerShape(topStart = D.R24, topEnd = D.R24)).background(C.Page)
+                .clickable(remember { MutableInteractionSource() }, null) { }   // taps on the sheet stay on the sheet
+                .navigationBarsPadding(),
+        ) {
+            LazyColumn(Modifier.weight(1f).testTag("pdp_list"), contentPadding = PaddingValues(bottom = D.R24)) {
+                item(key = "gallery") {
+                    Box(Modifier.fillMaxWidth().height(300.dp).background(C.Card)) {
+                        HorizontalPager(pager, Modifier.fillMaxSize()) { k ->
+                            Box(Modifier.fillMaxSize().padding(start = 32.dp, end = 32.dp, top = 36.dp, bottom = 28.dp), contentAlignment = Alignment.Center) {
+                                // the first picture is the one that travelled here from the card
+                                Image(painterResource(p.image), p.name, contentScale = ContentScale.Fit,
+                                    modifier = (if (k == 0 && route.hero != null) Modifier.hero("img-${route.hero}", true) else Modifier)
+                                        .fillMaxSize().padding(if (k == 0) 0.dp else 28.dp))
+                            }
+                        }
+                        // drag strip with its handle
+                        Box(
+                            Modifier.align(Alignment.TopCenter).fillMaxWidth().height(32.dp)
+                                .draggable(
+                                    rememberDraggableState { d -> scope.launch { drag.snapTo((drag.value + d).coerceAtLeast(0f)) } },
+                                    Orientation.Vertical,
+                                    onDragStopped = { v -> if (drag.value > dismissAt || v > 1800f) state.back() else drag.animateTo(0f, M.bar()) },
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) { Box(Modifier.width(40.dp).height(4.dp).background(C.Line, RoundedCornerShape(2.dp))) }
                         if (p.offPercent > 0) {
-                            Spacer(Modifier.width(6.dp)); OldPrice(p.oldPrice, 11.6.sp)
-                            Spacer(Modifier.width(6.dp)); Text("${p.offPercent}%", style = T.smallM.copy(fontSize = 11.7.sp), color = Color(0xFFDD0C19))
+                            Text("${p.offPercent}% OFF", style = T.badge.copy(lineHeight = 16.sp), color = C.OffBlue,
+                                modifier = Modifier.align(Alignment.BottomStart).padding(start = D.Side, bottom = D.GridGap)
+                                    .background(Color.White, RoundedCornerShape(D.R12)).padding(horizontal = 8.dp, vertical = 2.dp))
                         }
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.Star, null, tint = Color(0xFFF5A623), modifier = Modifier.size(14.dp))
-                        Text(" %.1f".format(p.rating), style = T.smallM, color = C.Ink)
-                        Text("  ·  Free delivery over ", style = T.small, color = C.Ink2)
-                        Dirham(8.dp, C.Ink2); Text("100", style = T.small, color = C.Ink2)
-                    }
-                }
-            }
-            item {
-                Column(Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp).fillMaxWidth().background(Color.White, RoundedCornerShape(12.dp)).animateContentSize()) {
-                    Row(Modifier.fillMaxWidth().height(44.dp).clickable { summary = !summary }.padding(horizontal = 13.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Product Summary", style = T.smallM.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp), color = C.Ink, modifier = Modifier.weight(1f))
-                        Icon(if (summary) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown, null, tint = C.Ink)
-                    }
-                    if (summary) {
-                        Column(Modifier.padding(start = 10.dp, end = 10.dp, bottom = 10.dp).fillMaxWidth().background(Color(0xFFF6F6F6), RoundedCornerShape(8.dp)).padding(12.dp)) {
-                            bullets(p).forEach { b ->
-                                Row(Modifier.padding(vertical = 3.dp)) {
-                                    Text("•", style = T.small, color = C.Ink, modifier = Modifier.width(12.dp))
-                                    Text(b, style = T.small.copy(lineHeight = 17.sp), color = C.Ink)
-                                }
+                        Row(Modifier.align(Alignment.BottomEnd).padding(end = 8.dp, bottom = 4.dp)) {
+                            val wished = p.id in state.wishlist
+                            val beat by animateFloatAsState(if (wished) 1f else 0f, M.pop(), label = "wish")
+                            RoundIcon(if (wished) Icons.Rounded.Favorite else Icons.Outlined.FavoriteBorder, if (wished) "Remove from saved" else "Save",
+                                if (wished) C.Danger else C.Ink, Modifier.graphicsLayer { val s = 1f + 0.18f * beat; scaleX = s; scaleY = s }) { state.toggleWish(p.id) }
+                            RoundIcon(Icons.Outlined.Share, "Share") { }
+                        }
+                        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = D.GridGap)) {
+                            repeat(3) { k ->
+                                val w by animateDpAsState(if (k == pager.currentPage) 16.dp else 6.dp, M.bar(), label = "dot")
+                                Box(Modifier.padding(horizontal = 2.dp).width(w).height(6.dp).background(if (k == pager.currentPage) C.Ink2 else C.Line, RoundedCornerShape(3.dp)))
                             }
                         }
                     }
-                    HorizontalDivider(color = C.Line, modifier = Modifier.padding(horizontal = 10.dp))
-                    Column(Modifier.padding(10.dp).fillMaxWidth().background(Color(0xFFF6F6F6), RoundedCornerShape(8.dp)).padding(12.dp)) {
-                        Text("Product Information", style = T.smallM.copy(fontSize = 11.5.sp), color = C.Ink)
+                }
+                item(key = "title") {
+                    Row(Modifier.fillMaxWidth().padding(start = D.Side, end = D.GridGap, top = D.Side), verticalAlignment = Alignment.Top) {
+                        Column(Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Rounded.Star, null, tint = C.Star, modifier = Modifier.size(14.dp))
+                                Text(" %.1f".format(p.rating), style = T.smallM, color = C.Ink)
+                                Text("  ·  ${p.brand.ifBlank { DEPT_NAMES[p.dept] ?: "Demo Cart" }}", style = T.small, color = C.Ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                            Spacer(Modifier.height(4.dp))
+                            Text(p.name, style = T.h1, color = C.Ink)
+                            Text(p.unit, style = T.body, color = C.Ink2, modifier = Modifier.testTag("pdp_unit"))
+                            Spacer(Modifier.height(8.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Price(p.price, T.priceBig, C.Ink, 13.dp)
+                                if (p.offPercent > 0) {
+                                    Spacer(Modifier.width(8.dp)); OldPrice(p.oldPrice, T.small.fontSize)
+                                    Spacer(Modifier.width(8.dp)); Text("${p.offPercent}% off", style = T.smallM, color = C.Danger)
+                                }
+                            }
+                        }
+                        Spacer(Modifier.width(D.GridGap))
+                        AddButton(state, p, Modifier.padding(top = 20.dp), AddKind.Large, tag = "pdp_add")
+                    }
+                }
+                item(key = "about") {
+                    Text(p.description, style = T.body, color = C.Ink2, maxLines = if (description) Int.MAX_VALUE else 3, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = D.Side).padding(top = D.GridGap).animateContentSize(M.bar())
+                            .clickable(remember { MutableInteractionSource() }, null) { description = !description })
+                }
+                item(key = "delivery") {
+                    Row(Modifier.fillMaxWidth().padding(start = D.Side, end = D.Side, top = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                        HorizontalDivider(Modifier.weight(1f), color = C.Line)
+                        Text("DELIVERED BY DEMO CART", style = T.cardUnit.copy(letterSpacing = 1.sp), color = C.Ink2, modifier = Modifier.padding(horizontal = D.GridGap))
+                        HorizontalDivider(Modifier.weight(1f), color = C.Line)
+                    }
+                    Row(Modifier.fillMaxWidth().padding(horizontal = D.Side, vertical = D.GridGap), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(40.dp).background(C.BrandSoft, CircleShape), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Outlined.Timer, null, tint = C.Brand, modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(Modifier.width(D.GridGap))
+                        Column(Modifier.weight(1f)) {
+                            val chosen = state.slot
+                            Text(if (chosen != null) slotLabel(chosen) else "Earliest: ${slotLabel(FIRST_SLOT)}", style = T.bodyM, color = C.Ink)
+                            Text("Scheduled delivery · free when your items come to ${fmt(state.freeDeliveryFrom)} or more", style = T.small, color = C.Ink2)
+                        }
+                    }
+                }
+                item(key = "facts") {
+                    Column(Modifier.padding(horizontal = D.Side).fillMaxWidth().background(C.Surface, RoundedCornerShape(D.R16)).padding(D.GridGap)) {
+                        Text("About this item", style = T.h3, color = C.Ink)
+                        bullets(p).forEach { b ->
+                            Row(Modifier.padding(top = 8.dp)) {
+                                Text("•", style = T.small, color = C.Ink, modifier = Modifier.width(12.dp))
+                                Text(b, style = T.small, color = C.Ink)
+                            }
+                        }
+                        HorizontalDivider(color = C.Line, modifier = Modifier.padding(vertical = D.GridGap))
                         listOf("Brand" to p.brand.ifBlank { "Demo Cart Select" }, "Category" to (DEPT_NAMES[p.dept] ?: ""), "Content" to p.unit, "Rating" to "%.1f / 5".format(p.rating)).forEach { (k, v) ->
-                            Row(Modifier.padding(top = 14.dp)) {
-                                Text(k, style = T.small, color = C.Ink2, modifier = Modifier.width(82.dp))
+                            Row(Modifier.padding(bottom = 8.dp)) {
+                                Text(k, style = T.small, color = C.Ink2, modifier = Modifier.width(84.dp))
                                 Text(v, style = T.small, color = C.Ink)
                             }
                         }
                     }
-                    Row(Modifier.fillMaxWidth().height(44.dp).clickable { description = !description }.padding(horizontal = 13.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Product Description", style = T.smallM.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp), color = C.Ink, modifier = Modifier.weight(1f))
-                        Icon(if (description) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown, null, tint = C.Ink)
-                    }
-                    if (description) Text(p.description, style = T.small.copy(lineHeight = 18.sp), color = C.Ink2, modifier = Modifier.padding(start = 13.dp, end = 13.dp, bottom = 14.dp))
+                }
+                item(key = "similar") {
+                    SectionHeader("Similar products", Modifier.padding(top = 8.dp))
+                    ProductRail(state, similar, { s -> state.open(s.id) }, origin = "similar-${p.id}")
                 }
             }
-            item {
-                Text("Similar Products", style = T.h3.copy(fontWeight = FontWeight.Bold, fontSize = 15.sp), color = C.Ink, modifier = Modifier.padding(start = 12.dp, top = 18.dp, bottom = 10.dp))
-                LazyRow(contentPadding = PaddingValues(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(similar, key = { it.id }) { ProductCard(state, it, { s -> state.open(s.id) }) }
+            // "what waits": the way to the cart shows only once there is something in it
+            AnimatedVisibility(state.count > 0, enter = expandVertically(M.pop()) + fadeIn(), exit = shrinkVertically(M.bar()) + fadeOut()) {
+                val n = state.count
+                Row(
+                    Modifier.padding(horizontal = D.GridGap, vertical = 8.dp).fillMaxWidth().height(56.dp).background(C.Brand, RoundedCornerShape(D.R16))
+                        .pressable { state.go(Route.Cart) }.padding(horizontal = D.Side).testTag("pdp_view_cart"),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RollingText("$n item${if (n == 1) "" else "s"} added", n.toDouble(), T.button, Color.White)
+                    Spacer(Modifier.weight(1f))
+                    Text("View cart", style = T.button, color = Color.White)
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             }
         }
-        // Floating top buttons
-        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(start = 12.dp, end = 12.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            RoundIcon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") { state.back() }
-            Spacer(Modifier.weight(1f))
-            val wished = p.id in state.wishlist
-            RoundIcon(if (wished) Icons.Rounded.Favorite else Icons.Outlined.FavoriteBorder, "Save", if (wished) C.Danger else C.Ink) { state.toggleWish(p.id) }
-            Spacer(Modifier.width(12.dp))
-            RoundIcon(Icons.Outlined.Share, "Share") { }
-        }
-        // Sticky price bar + bottom navigation
-        Column(Modifier.align(Alignment.BottomCenter).navigationBarsPadding()) {
-            Row(
-                Modifier.padding(horizontal = 12.dp).fillMaxWidth().height(62.dp).shadow(8.dp, RoundedCornerShape(16.dp)).background(Color.White, RoundedCornerShape(16.dp)).padding(start = 13.dp, end = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Price(p.price, T.price.copy(fontSize = 15.sp), C.Ink, 11.dp)
-                    if (p.offPercent > 0) Row(verticalAlignment = Alignment.CenterVertically) {
-                        OldPrice(p.oldPrice, 11.6.sp); Spacer(Modifier.width(5.dp))
-                        Text("${p.offPercent}%", style = T.smallM.copy(fontSize = 11.7.sp), color = Color(0xFFDD0C19))
-                    }
-                }
-                val q = state.qty(p.id)
-                if (q == 0) {
-                    BlackPill("ADD TO CART", Modifier.width(129.8.dp).testTag("pdp_add")) { state.add(p.id) }
-                } else {
-                    Row(Modifier.width(129.8.dp).height(40.dp).background(C.Ink, RoundedCornerShape(20.dp)), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(40.dp).clickable { state.remove(p.id) }, contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Remove, "Remove one", tint = Color.White, modifier = Modifier.size(18.dp)) }
-                        Text("$q", style = T.bodyM.copy(fontWeight = FontWeight.Bold), color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-                        Box(Modifier.size(40.dp).clickable { state.add(p.id) }, contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Add, "Add one", tint = Color.White, modifier = Modifier.size(18.dp)) }
-                    }
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            BottomBar(state)
+    }
+}
+
+/** Round white button for the corner of a picture: 40 dp drawn inside a 48 dp touch area. */
+@Composable
+private fun RoundIcon(icon: ImageVector, desc: String, tint: Color = C.Ink, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(Modifier.size(D.Touch).clip(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Box(modifier.size(40.dp).shadow(2.dp, CircleShape).background(Color.White, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(icon, desc, tint = tint, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -301,6 +367,8 @@ private fun bullets(p: Product): List<String> {
 fun CartScreen(state: AppState) {
     var tab by remember { mutableIntStateOf(0) }
     var couponOpen by remember { mutableStateOf(false) }
+    var slotOpen by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
     val tabs = listOf("Top Picks" to arrayOf("fresh", "grocery"), "Snacks & Treats" to arrayOf("snacks"), "Drinks" to arrayOf("beverages"), "Home care" to arrayOf("household"))
     Column(Modifier.fillMaxSize().background(Color(0xFFF6F6F6))) {
         TopBar("My Cart", centered = false) { state.back() }
@@ -333,16 +401,21 @@ fun CartScreen(state: AppState) {
             item { Label("DELIVERY ITEMS") }
             item {
                 Card {
-                    Row(Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // top padding 5 dp: the 48 dp slot button centres the two text lines where the 12 dp padding had them
+                    Row(Modifier.padding(start = 12.dp, end = 4.dp, top = 5.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.Timer, null, tint = C.Ink, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(10.dp))
-                        Column {
+                        Column(Modifier.weight(1f)) {
                             Row {
                                 Text("Scheduled Delivery", style = T.smallM.copy(fontWeight = FontWeight.Bold, fontSize = 14.1.sp, lineHeight = 18.2.sp), color = C.Ink)
                                 Text("  |  ${state.count} Item${if (state.count == 1) "" else "s"}", style = T.small, color = C.Ink2)
                             }
-                            Text("Pick your delivery slot at checkout", style = T.small.copy(fontSize = 10.5.sp), color = C.Ink3)
+                            // the slot itself, in the cart: the one chosen, or the earliest on offer until the customer picks one
+                            val chosen = state.slot
+                            Text(if (chosen != null) slotLabel(chosen) else "Earliest: ${slotLabel(FIRST_SLOT)}", style = T.smallM,
+                                color = C.Ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("cart_slot"))
                         }
+                        PillAction(if (state.slot != null) "Change" else "Choose slot", "cart_slot_change") { slotOpen = true }
                     }
                     state.lines.forEach { line ->
                         val p = line.product
@@ -402,24 +475,15 @@ fun CartScreen(state: AppState) {
                 }
             }
             item {
-                Card(Modifier.padding(top = 14.dp)) {
-                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.ReceiptLong, null, tint = C.Ink, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Bill Summary", style = T.bodyM.copy(fontSize = 15.7.sp, fontWeight = FontWeight.Bold), color = C.Ink)
-                    }
-                    BillRow("Sub Total ( ${state.count} Items )", state.subtotal)
-                    if (state.couponValue > 0) BillRow("Coupon ${state.coupon}", -state.couponValue, C.Brand)
-                    BillRow("Service Fee", 2.0)
-                    HorizontalDivider(color = C.Line, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
-                    BillRow("Total (Incl. VAT)", (state.subtotal - state.couponValue).coerceAtLeast(0.0) + 2.0, bold = true)
-                    Spacer(Modifier.height(8.dp))
-                }
+                BillCard(state, "Bill Summary", T.bodyM.copy(fontSize = 15.7.sp, fontWeight = FontWeight.Bold), "Sub Total ( ${state.count} Items )",
+                    Modifier.padding(top = 14.dp), Icons.Outlined.ReceiptLong)
             }
         }
-        StickyTotal((state.subtotal - state.couponValue).coerceAtLeast(0.0) + 2.0, "GO TO CHECKOUT", enabled = true, tag = "go_checkout") { state.go(Route.Checkout) }
+        StickyTotal(state.total, "GO TO CHECKOUT", enabled = true, tag = "go_checkout") { state.go(Route.Checkout) }
     }
     if (couponOpen) CouponSheet(state) { couponOpen = false }
+    // the same sheet as at checkout; a slot chosen here is the one checkout shows
+    if (slotOpen) SlotSheet(state.slot, { state.slot = it; slotOpen = false; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) }) { slotOpen = false }
 }
 
 @Composable
@@ -435,12 +499,60 @@ private fun SavingRow(icon: ImageVector, title: String, sub: String, onClick: ()
     }
 }
 
+/**
+ * The bill, one card for both the cart and the checkout. Both read the fees and the total from [AppState], so the
+ * cart's total is the amount the checkout asks for. Every fee is named with its amount, a waived fee is shown
+ * struck through and marked free, and the header opens a one-line note under each fee.
+ */
 @Composable
-private fun BillRow(label: String, value: Double, color: Color = C.Ink, bold: Boolean = false) {
+private fun BillCard(state: AppState, title: String, titleStyle: TextStyle, subtotalLabel: String, modifier: Modifier = Modifier, icon: ImageVector? = null) {
+    var explain by remember { mutableStateOf(false) }
+    Card(modifier) {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = D.Touch).clip(RoundedCornerShape(topStart = D.Radius, topEnd = D.Radius))
+                .clickable(onClickLabel = "How fees work") { explain = !explain }.padding(horizontal = 12.dp).testTag("bill_fees"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (icon != null) { Icon(icon, null, tint = C.Ink, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)) }
+            Text(title, style = titleStyle, color = C.Ink, modifier = Modifier.weight(1f))
+            Text("How fees work", style = T.small, color = C.Ink2)
+            Icon(if (explain) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown, null, tint = C.Ink2, modifier = Modifier.size(16.dp))
+        }
+        BillRow(subtotalLabel, state.subtotal)
+        if (state.couponValue > 0) BillRow("Coupon ${state.coupon}", -state.couponValue, C.Brand)
+        BillRow("Delivery Fee", state.deliveryFee, waived = state.deliveryFeeFull.takeIf { state.deliveryFee == 0.0 })
+        FeeNote(explain, "Free when your items come to ${fmt(state.freeDeliveryFrom)} or more.")
+        BillRow("Packaging fee", state.packagingFee)
+        FeeNote(explain, "Bags and chilled packing for this order.")
+        BillRow("Service Fee", state.serviceFee)
+        FeeNote(explain, "Helps run the app and customer support.")
+        HorizontalDivider(color = C.Line, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+        BillRow("Total (Incl. VAT)", state.total, bold = true)
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun FeeNote(open: Boolean, text: String) {
+    AnimatedVisibility(open, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+        Text(text, style = T.small, color = C.Ink2, modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 4.dp))
+    }
+}
+
+/** One line of the bill. [waived] is the fee's usual amount when it isn't charged: it is shown struck through, then FREE. */
+@Composable
+private fun BillRow(label: String, value: Double, color: Color = C.Ink, bold: Boolean = false, waived: Double? = null) {
+    val amount = if (bold) T.bodyM.copy(fontSize = 15.2.sp, fontWeight = FontWeight.SemiBold) else T.small.copy(fontSize = 13.7.sp, fontWeight = FontWeight.SemiBold)
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = if (bold) T.bodyM.copy(fontSize = 15.2.sp, fontWeight = FontWeight.Medium) else T.small.copy(fontSize = 13.7.sp, fontWeight = FontWeight.SemiBold), color = if (bold) C.Ink else Color(0xFF363637), modifier = Modifier.weight(1f))
-        if (value < 0) Text("− ", style = T.smallM, color = color)
-        Price(kotlin.math.abs(value), if (bold) T.bodyM.copy(fontSize = 15.2.sp, fontWeight = FontWeight.SemiBold) else T.small.copy(fontSize = 13.7.sp, fontWeight = FontWeight.SemiBold), color, 8.dp)
+        if (waived != null) {
+            OldPrice(waived, T.small.fontSize)
+            Spacer(Modifier.width(6.dp))
+            Text("FREE", style = amount, color = C.Brand)
+        } else {
+            if (value < 0) Text("− ", style = T.smallM, color = color)
+            Price(kotlin.math.abs(value), amount, color, 8.dp)
+        }
     }
 }
 
@@ -515,10 +627,15 @@ private fun days(): List<Day> {
 
 private val TIMES = listOf("8 – 10 AM", "12 – 2 PM", "4 – 6 PM", "8 – 10 PM")
 
+/** The earliest slot on offer: today's last window, the only one the slot sheet offers for today. */
+private val FIRST_SLOT = 0 to TIMES.lastIndex
+
+private fun slotLabel(slot: Pair<Int, Int>): String = "${days()[slot.first].top}, ${TIMES[slot.second]}"
+
 @Composable
 fun CheckoutScreen(state: AppState) {
     var slotOpen by remember { mutableStateOf(false) }
-    var slot by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    val slot = state.slot // chosen in the cart, or here
     var pay by remember { mutableIntStateOf(0) }
     var wallet by remember { mutableStateOf(false) }
     var points by remember { mutableStateOf(false) }
@@ -526,9 +643,7 @@ fun CheckoutScreen(state: AppState) {
     var door by remember { mutableStateOf(false) }
     var terms by remember { mutableStateOf(false) }
     var cardNotice by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { slotOpen = true }
-    val delivery = if (state.subtotal >= 100) 0.0 else 10.0
-    val total = (state.subtotal - state.couponValue).coerceAtLeast(0.0) + delivery + 1.0 + 2.0
+    LaunchedEffect(Unit) { if (state.slot == null) slotOpen = true } // only ask here when the cart didn't settle it
     val ready = slot != null && terms
     Column(Modifier.fillMaxSize().background(Color(0xFFF6F6F6))) {
         TopBar("Checkout", centered = true) { state.back() }
@@ -559,7 +674,7 @@ fun CheckoutScreen(state: AppState) {
                     ) {
                         Icon(Icons.Outlined.CalendarMonth, null, tint = Color.White, modifier = Modifier.size(15.dp))
                         Spacer(Modifier.width(6.dp))
-                        val label = slot?.let { (d, t) -> "${days()[d].top}, ${TIMES[t]}" } ?: "Select delivery slot"
+                        val label = slot?.let { slotLabel(it) } ?: "Select delivery slot"
                         Text(label, style = T.small.copy(fontSize = 11.5.sp), color = Color.White)
                         Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = Color.White, modifier = Modifier.size(16.dp))
                     }
@@ -616,22 +731,7 @@ fun CheckoutScreen(state: AppState) {
                     }
                 }
             }
-            item {
-                Card {
-                    Row(Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 4.dp)) {
-                        Text("Order Summary", style = T.bodyM.copy(fontWeight = FontWeight.Bold), color = C.Ink, modifier = Modifier.weight(1f))
-                        Text("How fees work", style = T.small.copy(fontSize = 11.sp), color = C.Ink2)
-                    }
-                    BillRow("Subtotal (${state.count} items)", state.subtotal)
-                    if (state.couponValue > 0) BillRow("Coupon ${state.coupon}", -state.couponValue, C.Brand)
-                    BillRow("Delivery Fee", delivery)
-                    BillRow("Packaging fee", 1.0)
-                    BillRow("Service Fee", 2.0)
-                    HorizontalDivider(color = C.Line, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
-                    BillRow("Total (Incl. VAT)", total, bold = true)
-                    Spacer(Modifier.height(8.dp))
-                }
-            }
+            item { BillCard(state, "Order Summary", T.bodyM.copy(fontWeight = FontWeight.Bold), "Subtotal (${state.count} items)") }
             item {
                 Card {
                     Row(Modifier.padding(end = 12.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -646,13 +746,13 @@ fun CheckoutScreen(state: AppState) {
             }
         }
         StickyTotal(
-            total, "Checkout", enabled = ready, tag = "place_order",
+            state.total, "Checkout", enabled = ready, tag = "place_order",
             warning = when { slot == null -> "Please pick a delivery slot to continue."; !terms -> "Please accept the Terms and Conditions."; else -> null },
         ) {
             if (pay == 0) cardNotice = true else state.go(Route.OrderPlaced(state.placeOrder()))
         }
     }
-    if (slotOpen) SlotSheet(slot, { slot = it; slotOpen = false }) { slotOpen = false }
+    if (slotOpen) SlotSheet(slot, { state.slot = it; slotOpen = false }) { slotOpen = false }
 }
 
 @Composable

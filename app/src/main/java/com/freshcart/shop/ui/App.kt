@@ -4,7 +4,14 @@ import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -19,6 +26,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,6 +55,9 @@ import androidx.compose.material.icons.rounded.LocalOffer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,25 +66,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import com.freshcart.shop.data.AppState
 import com.freshcart.shop.data.Catalog
 import com.freshcart.shop.data.Route
 import com.freshcart.shop.data.Store
 import com.freshcart.shop.data.Tab
 import com.freshcart.shop.ui.screens.AccountScreen
+import com.freshcart.shop.ui.screens.AisleScreen
 import com.freshcart.shop.ui.screens.BuyAgainScreen
 import com.freshcart.shop.ui.screens.CartScreen
 import com.freshcart.shop.ui.screens.CategoriesScreen
@@ -85,9 +103,10 @@ import com.freshcart.shop.ui.screens.MinutesScreen
 import com.freshcart.shop.ui.screens.MoneyScreen
 import com.freshcart.shop.ui.screens.OrderPlacedScreen
 import com.freshcart.shop.ui.screens.PaymentScreen
-import com.freshcart.shop.ui.screens.ProductScreen
+import com.freshcart.shop.ui.screens.ProductSheet
 import com.freshcart.shop.ui.screens.SearchScreen
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun App() {
     val state = remember { AppState() }
@@ -100,28 +119,63 @@ fun App() {
             else -> activity?.finish()
         }
     }
-    Box(Modifier.fillMaxSize().background(C.Page).semantics { testTagsAsResourceId = true }) {
-        AnimatedContent(
-            targetState = state.top,
-            transitionSpec = {
-                if (state.forward) (slideInHorizontally(tween(260)) { it / 3 } + fadeIn(tween(200))) togetherWith fadeOut(tween(160))
-                else fadeIn(tween(200)) togetherWith (slideOutHorizontally(tween(240)) { it / 3 } + fadeOut(tween(200)))
-            },
-            label = "route",
-        ) { route ->
-            when (route) {
-                Route.Tabs -> TabsHost(state)
-                is Route.Search -> SearchScreen(state, route.query)
-                is Route.Listing -> ListingScreen(state, route)
-                is Route.ProductPage -> ProductScreen(state, route.id)
-                Route.Cart -> CartScreen(state)
-                Route.Checkout -> CheckoutScreen(state)
-                Route.Payment -> PaymentScreen(state)
-                is Route.OrderPlaced -> OrderPlacedScreen(state, route.number)
+    // Dark status-bar icons on the light screens, light ones over a store header and over the dimmed product sheet.
+    val base = state.base
+    val lightTop = state.top !is Route.ProductPage && !(base == Route.Tabs && state.tab == Tab.Home)
+    val view = LocalView.current
+    SideEffect { activity?.window?.let { WindowCompat.getInsetsController(it, view).isAppearanceLightStatusBars = lightTop } }
+
+    SharedTransitionLayout(Modifier.fillMaxSize().background(C.Page).semantics { testTagsAsResourceId = true }) {
+        CompositionLocalProvider(LocalShared provides this) {
+            // The screen under any product sheet. A new screen slides in from the right on a spring and leaves the same way.
+            AnimatedContent(
+                targetState = base,
+                transitionSpec = {
+                    if (state.forward) (slideInHorizontally(M.sheet()) { it / 3 } + fadeIn(M.bar())) togetherWith fadeOut(M.snap())
+                    else fadeIn(M.bar()) togetherWith (slideOutHorizontally(M.sheet()) { it / 3 } + fadeOut(M.snap()))
+                },
+                label = "route",
+            ) { route ->
+                when (route) {
+                    Route.Tabs -> TabsHost(state)
+                    is Route.Search -> SearchScreen(state, route.query)
+                    is Route.Listing -> ListingScreen(state, route)
+                    is Route.Aisle -> AisleScreen(state, route)
+                    is Route.ProductPage -> Unit
+                    Route.Cart -> CartScreen(state)
+                    Route.Checkout -> CheckoutScreen(state)
+                    Route.Payment -> PaymentScreen(state)
+                    is Route.OrderPlaced -> OrderPlacedScreen(state, route.number)
+                }
             }
+            ProductSheetHost(state)
         }
     }
 }
+
+/**
+ * The product page is a sheet over whatever screen it was opened from: that screen stays where it was and dims,
+ * and the sheet rises from the bottom edge on a spring. Tapping the dimmed part, the close button or Back sends it
+ * back down.
+ */
+@Composable
+private fun ProductSheetHost(state: AppState) {
+    val top = state.top as? Route.ProductPage
+    val last = remember { arrayOfNulls<Route.ProductPage>(1) }   // what to keep drawing while the sheet leaves
+    if (top != null) last[0] = top
+    AnimatedVisibility(top != null, enter = fadeIn(M.bar()), exit = fadeOut(M.bar())) {
+        Box(Modifier.fillMaxSize().background(C.Scrim).clickable(remember { MutableInteractionSource() }, null) { state.back() })
+    }
+    AnimatedVisibility(top != null, enter = slideInVertically(M.sheet()) { it }, exit = slideOutVertically(M.sheet()) { it }) {
+        last[0]?.let { ProductSheet(state, it) }
+    }
+}
+
+private val STORES = setOf(Store.Hypermarket.name, Store.Minutes.name, Store.Money.name)
+
+private val PAGE_ORDER = listOf(
+    Store.Hypermarket.name, Store.Minutes.name, Store.Money.name, Tab.Categories.name, Tab.BuyAgain.name, Tab.Deals.name, Tab.Account.name,
+)
 
 /** Tab pages with the floating bottom bar and floating View cart pill; both hide while scrolling down. */
 @Composable
@@ -137,7 +191,20 @@ fun TabsHost(state: AppState) {
     }
     Box(Modifier.fillMaxSize().nestedScroll(hideOnScroll)) {
         val page = if (state.tab == Tab.Home) state.store.name else state.tab.name
-        AnimatedContent(page, transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) }, label = "tab") { p ->
+        // Pages slide a short way in the direction of the tab that was chosen. Between the three stores the page
+        // changes at once: their headers share the store tabs, and only the selected tab glides across, so two
+        // headers never show on top of each other. What is below the header makes its own entrance.
+        AnimatedContent(
+            page, label = "tab",
+            transitionSpec = {
+                if (targetState in STORES && initialState in STORES) EnterTransition.None togetherWith ExitTransition.None
+                else {
+                    val dir = if (PAGE_ORDER.indexOf(targetState) >= PAGE_ORDER.indexOf(initialState)) 1 else -1
+                    (slideInHorizontally(M.bar()) { dir * it / 8 } + fadeIn(M.bar())) togetherWith
+                        (slideOutHorizontally(M.bar()) { -dir * it / 8 } + fadeOut(M.snap()))
+                }
+            },
+        ) { p ->
             when (p) {
                 Store.Hypermarket.name -> HomeScreen(state)
                 Store.Minutes.name -> MinutesScreen(state)
@@ -151,7 +218,7 @@ fun TabsHost(state: AppState) {
         val showBars = state.store != Store.Money || state.tab != Tab.Home
         Column(Modifier.align(Alignment.BottomCenter).navigationBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
             ViewCartPill(state, Modifier.padding(bottom = if (barsShown && showBars) 10.dp else 16.dp))
-            AnimatedVisibility(barsShown && showBars, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
+            AnimatedVisibility(barsShown && showBars, enter = slideInVertically(M.bar()) { it } + fadeIn(), exit = slideOutVertically(M.bar()) { it } + fadeOut()) {
                 BottomBar(state)
             }
         }
@@ -168,45 +235,65 @@ private val NAV = listOf(
     NavItem(Tab.Account, "Account", Icons.Outlined.AccountCircle, Icons.Rounded.AccountCircle),
 )
 
-/** Floating frosted bar: 5 items of 72.7 x 48 dp inside a 10 dp inset pill. */
+/**
+ * Floating frosted bar, the third of the three tab rows: 5 items of 48 dp inside a 60 dp pill. One grey pill sits
+ * behind the selected icon and springs to the next one with a little overshoot; the icon it lands on pops up.
+ */
 @Composable
 fun BottomBar(state: AppState) {
-    Row(
+    val haptic = LocalHapticFeedback.current
+    val idx = NAV.indexOfFirst { it.tab == state.tab }
+    BoxWithConstraints(
         Modifier.padding(start = 10.dp, end = 10.dp, bottom = 10.5.dp).fillMaxWidth().height(60.dp)
             .shadow(10.dp, RoundedCornerShape(30.dp), ambientColor = Color.Black.copy(alpha = 0.25f))
             .background(C.Glass, RoundedCornerShape(30.dp))
             .border(1.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(30.dp))
             .padding(horizontal = 4.5.dp)
             .testTag("bottom_bar"),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        NAV.forEach { item ->
-            val sel = state.tab == item.tab
-            Column(
-                Modifier.weight(1f).height(48.dp).testTag("nav_${item.tab.name.lowercase()}")
-                    .clickable(remember { MutableInteractionSource() }, null) { state.popToTabs(); state.tab = item.tab },
-                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-            ) {
-                Box(
-                    Modifier.width(52.dp).height(28.dp).background(if (sel) Color(0xFFDADADA) else Color.Transparent, RoundedCornerShape(14.dp)),
-                    contentAlignment = Alignment.Center,
+        val itemW = maxWidth / NAV.size
+        val x by animateDpAsState(itemW * idx + (itemW - 52.dp) / 2, spring(dampingRatio = 0.68f, stiffness = 420f), label = "navPill")
+        Box(Modifier.offset(x = x, y = 8.dp).width(52.dp).height(28.dp).background(C.NavPill, RoundedCornerShape(14.dp)))
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            NAV.forEachIndexed { i, item ->
+                val sel = i == idx
+                val pop by animateFloatAsState(if (sel) 1f else 0f, M.pop(), label = "navPop")
+                Column(
+                    Modifier.weight(1f).height(48.dp).testTag("nav_${item.tab.name.lowercase()}")
+                        .clickable(remember { MutableInteractionSource() }, null) {
+                            if (!sel) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            state.popToTabs(); state.tab = item.tab
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
                 ) {
-                    Icon(if (sel) item.selected else item.icon, null, tint = if (sel) (if (state.store == Store.Minutes && item.tab == Tab.Home) C.Campaign else C.Brand) else C.Ink2, modifier = Modifier.size(22.dp))
+                    Box(Modifier.width(52.dp).height(28.dp), contentAlignment = Alignment.Center) {
+                        Icon(
+                            if (sel) item.selected else item.icon, null,
+                            tint = if (sel) (if (state.store == Store.Minutes && item.tab == Tab.Home) C.Campaign else C.Brand) else C.Ink2,
+                            modifier = Modifier.size(22.dp).graphicsLayer { val s = 1f + 0.16f * pop; scaleX = s; scaleY = s; translationY = -1.dp.toPx() * pop },
+                        )
+                    }
+                    Spacer(Modifier.height(2.dp))
+                    Text(item.label, style = if (sel) T.nav.copy(fontWeight = FontWeight.Medium) else T.nav, color = if (sel) C.NavSel else C.Ink2, maxLines = 1)
                 }
-                Spacer(Modifier.height(2.dp))
-                Text(item.label, style = if (sel) T.nav.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium) else T.nav, color = if (sel) C.NavSel else C.Ink2, maxLines = 1)
             }
         }
     }
 }
 
-/** Floating "View cart" pill: thumbnail, title, "n items · price", chevron. 250 x 57.5 dp. */
+/**
+ * Floating "View cart" pill: thumbnail, title, "n items · price", chevron. 250 x 57.5 dp. It springs up when the
+ * first item is added and gives a small bump on every add; the count and the amount roll to their new values.
+ */
 @Composable
 fun ViewCartPill(state: AppState, modifier: Modifier = Modifier) {
-    AnimatedVisibility(state.count > 0, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut(), modifier = modifier) {
+    val bump = remember { Animatable(1f) }
+    val n = state.count
+    LaunchedEffect(n) { if (n > 0) { bump.snapTo(1.07f); bump.animateTo(1f, M.pop()) } }
+    AnimatedVisibility(n > 0, enter = slideInVertically(M.pop()) { it } + fadeIn(), exit = slideOutVertically(M.bar()) { it } + fadeOut(), modifier = modifier) {
         val first = state.lines.firstOrNull()?.product
         Row(
-            Modifier.width(250.dp).height(57.5.dp)
+            Modifier.graphicsLayer { scaleX = bump.value; scaleY = bump.value }.width(250.dp).height(57.5.dp)
                 .shadow(12.dp, RoundedCornerShape(29.dp), ambientColor = Color.Black.copy(alpha = 0.3f))
                 .background(C.Glass, RoundedCornerShape(29.dp))
                 .border(1.dp, Color.White.copy(alpha = 0.8f), RoundedCornerShape(29.dp))
@@ -222,9 +309,11 @@ fun ViewCartPill(state: AppState, modifier: Modifier = Modifier) {
             Column(Modifier.weight(1f)) {
                 Text("View cart", style = T.viewCart, color = C.Slate)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val n = state.count
-                    Text("$n item${if (n == 1) "" else "s"} · ", style = T.viewCartSub, color = Color(0xFF3D3D3E))
-                    Price(state.subtotal, T.viewCartSub, Color(0xFF3D3D3E), 9.dp)
+                    RollingText("$n item${if (n == 1) "" else "s"}", n.toDouble(), T.viewCartSub, C.Slate)
+                    Text(" · ", style = T.viewCartSub, color = C.Slate)
+                    Dirham(9.dp, C.Slate)
+                    Spacer(Modifier.width(2.dp))
+                    RollingText(fmt(state.subtotal), state.subtotal, T.viewCartSub, C.Slate)
                 }
             }
             Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = C.Ink, modifier = Modifier.size(20.dp))
@@ -232,7 +321,11 @@ fun ViewCartPill(state: AppState, modifier: Modifier = Modifier) {
     }
 }
 
-/** Helper so screens can open things without knowing the stack. */
-fun AppState.open(id: String) = go(Route.ProductPage(id))
+/** Opens a product as a sheet. If a card asked for it, its picture travels to the sheet. */
+fun AppState.open(id: String) {
+    val hero = pendingHero
+    pendingHero = null
+    go(Route.ProductPage(id, hero))
+}
 fun AppState.list(title: String, dept: String? = null, deals: Boolean = false) = go(Route.Listing(title, dept, deals = deals))
 val AppState.catalog get() = Catalog

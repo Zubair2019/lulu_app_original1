@@ -1,50 +1,103 @@
 package com.freshcart.shop.ui.screens
 
-
-import com.freshcart.shop.ui.Plex
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.outlined.LocalOffer
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.freshcart.shop.R
 import com.freshcart.shop.data.AppState
+import com.freshcart.shop.data.Catalog
+import com.freshcart.shop.data.Product
 import com.freshcart.shop.data.Route
+import com.freshcart.shop.ui.AddButton
+import com.freshcart.shop.ui.AddKind
 import com.freshcart.shop.ui.C
+import com.freshcart.shop.ui.D
+import com.freshcart.shop.ui.IconCircle
+import com.freshcart.shop.ui.LocalHeroOrigin
+import com.freshcart.shop.ui.LocalSeen
+import com.freshcart.shop.ui.M
+import com.freshcart.shop.ui.OldPrice
+import com.freshcart.shop.ui.Plex
+import com.freshcart.shop.ui.Price
+import com.freshcart.shop.ui.SearchField
 import com.freshcart.shop.ui.T
+import com.freshcart.shop.ui.ViewCartPill
+import com.freshcart.shop.ui.appear
+import com.freshcart.shop.ui.hero
+import com.freshcart.shop.ui.open
 import com.freshcart.shop.ui.pressable
+import com.freshcart.shop.ui.reducedMotion
 
 data class Sub(val name: String, val image: Int, val query: String? = null)
 data class Dept(val name: String, val image: Int, val dept: String, val subs: List<Sub>)
@@ -136,39 +189,223 @@ fun TitleBar(title: String, modifier: Modifier = Modifier, size: androidx.compos
     }
 }
 
-@Composable
-fun CategoryTile(name: String, image: Int, chevron: Boolean, onClick: () -> Unit) {
-    Column(
-        Modifier.width(75.dp).height(95.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFE1E1E1)).pressable(onClick),
-    ) {
-        Row(Modifier.fillMaxWidth().padding(start = 5.dp, top = 6.dp, end = 3.dp), verticalAlignment = Alignment.Top) {
-            Text(name, style = TextStyle(fontFamily = Plex, fontSize = 11.sp, fontWeight = FontWeight.Bold, lineHeight = 12.sp, letterSpacing = (-0.2).sp), color = C.Ink, maxLines = 2, modifier = Modifier.weight(1f))
-            if (chevron) Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = C.Ink, modifier = Modifier.size(14.dp))
-        }
-        Image(painterResource(image), name, contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 4.dp))
-    }
-}
+// ---------------------------------------------------------------- Categories: every aisle on one page
 
+/**
+ * Categories as a page of tiles: each group has a heading and its aisles in a grid of four, a picture on a soft
+ * ground with the name under it. Tapping one opens that aisle.
+ */
 @Composable
 fun CategoriesScreen(state: AppState) {
-    Column(Modifier.fillMaxSize().background(Color(0xFFEBEBEC))) {
-        TitleBar("Categories", size = 14.sp)
-        LazyColumn(Modifier.fillMaxSize().testTag("categories_list"), contentPadding = PaddingValues(bottom = 150.dp)) {
-            CATEGORY_GROUPS.forEach { g ->
-                item(key = g.title) {
-                    Text(g.title, style = TextStyle(fontFamily = Plex, fontSize = 15.1.sp, fontWeight = FontWeight.Normal, lineHeight = 20.sp), color = C.Ink,
-                        textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 11.dp))
+    val seen = remember { mutableSetOf<Any>() }
+    CompositionLocalProvider(LocalSeen provides seen) {
+        Column(Modifier.fillMaxSize().background(C.Page)) {
+            TitleBar("Categories", size = 15.5.sp)
+            LazyColumn(Modifier.fillMaxSize().testTag("categories_list"), contentPadding = PaddingValues(bottom = 150.dp)) {
+                item(key = "search") {
+                    Spacer(Modifier.height(D.GridGap))
+                    SearchField(state, bg = C.Surface)
                 }
-                g.depts.forEach { d ->
-                    item(key = g.title + d.name) {
-                        LazyRow(Modifier.padding(bottom = 11.dp), contentPadding = PaddingValues(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            item { CategoryTile(d.name, d.image, true) { state.go(Route.Listing(d.name, d.dept)) } }
-                            items(d.subs) { s -> CategoryTile(s.name, s.image, false) { state.go(Route.Listing(s.name, d.dept, s.query)) } }
+                CATEGORY_GROUPS.forEachIndexed { g, group ->
+                    item(key = group.title) {
+                        Text(group.title.lowercase().replaceFirstChar { it.uppercase() }, style = T.h2, color = C.Ink,
+                            modifier = Modifier.padding(start = D.GridGap, top = 20.dp, bottom = D.GridGap))
+                    }
+                    val rows = group.depts.chunked(4)
+                    rows.forEachIndexed { r, row ->
+                        item(key = group.title + r) {
+                            Row(Modifier.fillMaxWidth().padding(horizontal = D.GridGap).padding(bottom = D.GridGap), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                row.forEachIndexed { k, d -> AisleTile(d, Modifier.weight(1f).appear(g + r + k, "cat-${d.name}")) { state.go(Route.Aisle(d.name)) } }
+                                repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+/** One aisle on the categories page: the whole picture on a soft rounded ground, name on two lines under it. */
+@Composable
+private fun AisleTile(d: Dept, modifier: Modifier, onClick: () -> Unit) {
+    Column(modifier.pressable(onClick).testTag("aisle_${d.dept}_${d.name.take(3).lowercase()}"), horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(painterResource(d.image), null, contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxWidth().aspectRatio(0.95f).clip(RoundedCornerShape(D.R12)).background(C.BrandSoft).padding(8.dp))
+        Spacer(Modifier.height(8.dp))
+        Text(d.name, style = T.smallM, color = C.Ink, maxLines = 2, minLines = 2, textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+// ---------------------------------------------------------------- One aisle: sections in a rail, products beside it
+
+/** The products of one rail entry. Entry 0 is the whole department; the others narrow it by their word, or reshuffle it. */
+private fun aisleProducts(dept: Dept, index: Int, sub: Sub): List<Product> {
+    val all = Catalog.dept(dept.dept).sortedByDescending { it.offPercent }
+    if (index == 0 || all.isEmpty()) return all
+    val words = (sub.query ?: sub.name).lowercase().split(' ', ',', '&').map { it.trim().trimEnd('s') }.filter { it.length > 2 }
+    val hits = all.filter { p -> words.any { w -> p.name.lowercase().contains(w) } }
+    return hits.ifEmpty { all.drop(index % all.size) + all.take(index % all.size) }
+}
+
+/**
+ * One department as an aisle. A rail on the left holds its sections as round pictures with a bar marking the one
+ * showing; the products fill the rest in two columns, under a row of filter chips. The rail slides in from the left
+ * edge and the products from the right as the page opens, like a drawer; changing section slides the products up or
+ * down the way the rail moved.
+ */
+@Composable
+fun AisleScreen(state: AppState, r: Route.Aisle) {
+    val dept = remember(r.dept) { CATEGORY_GROUPS.flatMap { it.depts }.firstOrNull { it.name == r.dept } }
+    if (dept == null) { LaunchedEffect(Unit) { state.back() }; return }
+    val rail = remember(dept) { listOf(Sub("All", dept.image)) + dept.subs }
+    var sel by remember(r) { mutableIntStateOf(r.sub.coerceIn(0, rail.lastIndex)) }
+    var sort by remember { mutableIntStateOf(0) }
+    var offers by remember { mutableStateOf(false) }
+    val sortNames = listOf("Sort", "Price: low to high", "Price: high to low", "Biggest discount")
+    val reduced = reducedMotion()
+    val enter = remember { Animatable(if (reduced) 1f else 0f) }
+    LaunchedEffect(Unit) { enter.animateTo(1f, M.sheet()) }
+    val railPx = with(LocalDensity.current) { D.RailW.toPx() }
+    val seen = remember { mutableSetOf<Any>() }
+
+    CompositionLocalProvider(LocalSeen provides seen, LocalHeroOrigin provides "aisle") {
+        Box(Modifier.fillMaxSize().background(C.Page)) {
+            Column(Modifier.fillMaxSize()) {
+                Row(Modifier.fillMaxWidth().statusBarsPadding().height(56.dp).padding(horizontal = D.GridGap), verticalAlignment = Alignment.CenterVertically) {
+                    IconCircle(Icons.AutoMirrored.Rounded.ArrowBack, "Back", { state.back() })
+                    Spacer(Modifier.width(D.GridGap))
+                    Column(Modifier.weight(1f)) {
+                        Text(dept.name, style = T.h3.copy(fontWeight = FontWeight.Bold), color = C.Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Row {
+                            Text("Delivering to ", style = T.small, color = C.Brand)
+                            Text(state.address.label, style = T.smallM, color = C.Ink, maxLines = 1)
+                        }
+                    }
+                    IconCircle(Icons.Rounded.Search, "Search", { state.go(Route.Search()) })
+                }
+                HorizontalDivider(color = C.Line)
+                Row(Modifier.fillMaxSize()) {
+                    Rail(rail, sel, Modifier.graphicsLayer { translationX = -(1f - enter.value) * railPx; alpha = enter.value.coerceIn(0f, 1f) }) { sel = it }
+                    Box(Modifier.width(1.dp).fillMaxHeight().background(C.Line))
+                    Column(Modifier.weight(1f).fillMaxHeight().graphicsLayer { translationX = (1f - enter.value) * railPx * 0.6f; alpha = enter.value.coerceIn(0f, 1f) }) {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = D.GridGap).height(D.Touch), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            AisleChip(Icons.Rounded.Tune, "Filters", false) { }
+                            AisleChip(Icons.Rounded.SwapVert, sortNames[sort], sort != 0) { sort = (sort + 1) % sortNames.size }
+                            AisleChip(Icons.Outlined.LocalOffer, "Offers", offers) { offers = !offers }
+                        }
+                        AnimatedContent(
+                            sel, label = "aisle", modifier = Modifier.fillMaxSize(),
+                            transitionSpec = {
+                                val down = targetState > initialState
+                                (slideInVertically(M.bar()) { if (down) it / 5 else -it / 5 } + fadeIn(M.bar())) togetherWith
+                                    (slideOutVertically(M.bar()) { if (down) -it / 5 else it / 5 } + fadeOut(M.snap()))
+                            },
+                        ) { index ->
+                            val base = remember(dept, index) { aisleProducts(dept, index, rail[index]) }
+                            val items = base.filter { !offers || it.offPercent > 0 }.let { l ->
+                                when (sort) { 1 -> l.sortedBy { it.price }; 2 -> l.sortedByDescending { it.price }; 3 -> l.sortedByDescending { it.offPercent }; else -> l }
+                            }
+                            if (items.isEmpty()) {
+                                Column(Modifier.fillMaxSize().padding(D.R24), horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Spacer(Modifier.height(48.dp))
+                                    Text("Nothing on offer here right now", style = T.h3, color = C.Ink, textAlign = TextAlign.Center)
+                                    Spacer(Modifier.height(8.dp))
+                                    Text("Switch Offers off to see everything in ${rail[index].name}.", style = T.body, color = C.Ink2, textAlign = TextAlign.Center)
+                                }
+                            } else {
+                                LazyVerticalGrid(
+                                    GridCells.Fixed(2), Modifier.fillMaxSize().testTag("product_grid"),
+                                    contentPadding = PaddingValues(start = D.GridGap, end = D.GridGap, top = 4.dp, bottom = 150.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(D.GridGap), verticalArrangement = Arrangement.spacedBy(D.Side),
+                                ) {
+                                    itemsIndexed(items, key = { _, p -> p.id }) { i, p -> AisleProduct(state, p, Modifier.animateItem().appear(i, "$index-${p.id}")) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            ViewCartPill(state, Modifier.align(Alignment.BottomCenter).padding(bottom = D.R24))
+        }
+    }
+}
+
+/** The side rail: one round picture and label per section, and a bar on its inner edge that springs to the chosen one. */
+@Composable
+private fun Rail(items: List<Sub>, selected: Int, modifier: Modifier, onSelect: (Int) -> Unit) {
+    val haptic = LocalHapticFeedback.current
+    val y by animateDpAsState(D.RailItemH * selected, M.bar(), label = "railBar")
+    Box(modifier.width(D.RailW).fillMaxHeight().verticalScroll(rememberScrollState()).padding(bottom = 150.dp).testTag("aisle_rail")) {
+        Column {
+            items.forEachIndexed { i, s ->
+                val sel = i == selected
+                val on by animateFloatAsState(if (sel) 1f else 0f, M.pop(), label = "railOn")
+                Column(
+                    Modifier.fillMaxWidth().height(D.RailItemH).testTag("rail_$i")
+                        .clickable(remember { MutableInteractionSource() }, null) {
+                            if (!sel) { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); onSelect(i) }
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                ) {
+                    Box(Modifier.size(56.dp).background(if (sel) C.BrandSoft else C.Surface, CircleShape), contentAlignment = Alignment.BottomCenter) {
+                        Image(painterResource(s.image), null, contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(48.dp).graphicsLayer { val k = 1f + 0.16f * on; scaleX = k; scaleY = k; translationY = -4.dp.toPx() * (1f - on * 0.5f) }.clip(CircleShape))
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(s.name, style = if (sel) T.railLabel.copy(fontWeight = FontWeight.Bold) else T.railLabel, color = if (sel) C.Ink else C.Ink2,
+                        maxLines = 2, textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp))
+                }
+            }
+        }
+        Box(Modifier.align(Alignment.TopEnd).offset(y = y + 12.dp).width(4.dp).height(D.RailItemH - 24.dp).background(C.Brand, RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp)))
+    }
+}
+
+/** Filter chip of the aisle page: 36 dp drawn, filled with the soft brand colour while it is on. */
+@Composable
+private fun AisleChip(icon: ImageVector, label: String, on: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        Modifier.height(36.dp).background(if (on) C.BrandSoft else C.Page, shape).border(1.dp, if (on) C.Brand else C.Line, shape).clip(shape)
+            .clickable(onClick = onClick).padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, tint = if (on) C.Brand else C.Ink, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = T.smallM, color = if (on) C.Brand else C.Ink, maxLines = 1)
+    }
+}
+
+/**
+ * Product card of the aisle page: the picture in a bordered tile with the pack size written on its lower left and
+ * ADD hanging over its lower right corner; under it the price, large, then the name on up to three lines and the rating.
+ */
+@Composable
+private fun AisleProduct(state: AppState, p: Product, modifier: Modifier) {
+    val hero = "${LocalHeroOrigin.current}-${p.id}"
+    Column(modifier.fillMaxWidth().pressable { state.pendingHero = hero; state.open(p.id) }.testTag("card_${p.id}")) {
+        Box(Modifier.fillMaxWidth()) {
+            Box(Modifier.fillMaxWidth().aspectRatio(0.92f).clip(RoundedCornerShape(D.R12)).background(C.Card).border(1.dp, C.Line, RoundedCornerShape(D.R12))) {
+                Image(painterResource(p.image), p.name, contentScale = ContentScale.Fit,
+                    modifier = Modifier.hero("img-$hero", !state.heroOpen(hero)).fillMaxSize().padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 36.dp))
+                if (p.offPercent > 0) {
+                    Text("${p.offPercent}% OFF", style = T.badge.copy(lineHeight = 16.sp), color = C.OffBlue,
+                        modifier = Modifier.padding(start = 6.dp, top = 6.dp).background(Color.White, RoundedCornerShape(D.R12)).padding(horizontal = 8.dp, vertical = 2.dp))
+                }
+                Text(p.unit, style = T.cardUnit, color = C.Ink, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.align(Alignment.BottomStart).padding(start = 8.dp, bottom = 10.dp, end = 76.dp).testTag("unit_${p.id}"))
+            }
+            AddButton(state, p, Modifier.align(Alignment.BottomEnd).offset(x = 4.dp, y = 6.dp), AddKind.Word)
+        }
+        Row(Modifier.padding(top = D.GridGap), verticalAlignment = Alignment.CenterVertically) {
+            Price(p.price, T.h2, C.Ink, 11.dp)
+            if (p.oldPrice > p.price) { Spacer(Modifier.width(6.dp)); OldPrice(p.oldPrice, T.cardUnit.fontSize) }
+        }
+        Text(p.name, style = T.body, color = C.Ink, maxLines = 3, minLines = 2, overflow = TextOverflow.Ellipsis)
+        Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.Star, null, tint = C.Star, modifier = Modifier.size(12.dp))
+            Text(" %.1f".format(p.rating), style = T.cardUnit, color = C.Ink2)
         }
     }
 }

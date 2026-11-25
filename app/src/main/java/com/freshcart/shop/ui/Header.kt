@@ -1,25 +1,26 @@
 package com.freshcart.shop.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,147 +29,69 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Bolt
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Storefront
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.freshcart.shop.data.AppState
 import com.freshcart.shop.data.Route
 import com.freshcart.shop.data.Store
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.roundToInt
+import kotlin.math.sin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-private data class StoreTab(val store: Store, val label: String, val icon: ImageVector, val weight: Float)
+private data class StoreTab(val store: Store, val label: String, val icon: ImageVector)
 
 private val STORE_TABS = listOf(
-    StoreTab(Store.Hypermarket, "Hypermarket", Icons.Outlined.Storefront, 133.5f),
-    StoreTab(Store.Minutes, "Minutes", Icons.Outlined.Bolt, 102.2f),
-    StoreTab(Store.Money, "Send Money", Icons.Outlined.Payments, 127.3f),
+    StoreTab(Store.Hypermarket, "Hypermarket", Icons.Rounded.Storefront),
+    StoreTab(Store.Minutes, "Minutes", Icons.Rounded.Bolt),
+    StoreTab(Store.Money, "Send Money", Icons.Rounded.Payments),
 )
 
-/** Store switcher: translucent track with a white selected pill that springs between tabs. 40 dp tabs, 4 dp inset. */
-@Composable
-fun StoreTabs(state: AppState, accent: Color, modifier: Modifier = Modifier) {
-    BoxWithConstraints(
-        modifier.fillMaxWidth().padding(horizontal = 10.9.dp).height(48.dp).background(C.TabRow, RoundedCornerShape(14.dp)).padding(4.dp),
-    ) {
-        val total = STORE_TABS.sumOf { it.weight.toDouble() }.toFloat()
-        val w = maxWidth
-        val starts = STORE_TABS.runningFold(0f) { acc, t -> acc + t.weight }.map { w * (it / total) }
-        val idx = STORE_TABS.indexOfFirst { it.store == state.store }
-        val x by animateDpAsState(starts[idx], spring(dampingRatio = 0.8f, stiffness = 500f), label = "pillX")
-        val pw by animateDpAsState(w * (STORE_TABS[idx].weight / total), spring(dampingRatio = 0.8f, stiffness = 500f), label = "pillW")
-        Box(Modifier.offset(x = x).width(pw).height(40.dp).background(Color.White, RoundedCornerShape(11.dp)))
-        Row(Modifier.fillMaxSize()) {
-            STORE_TABS.forEach { t ->
-                val sel = t.store == state.store
-                val tint by animateColorAsState(if (sel) accent else C.Slate, label = "tabTint")
-                // The id sits on a plain wrapper so it reports the drawn 40 dp, not the 48 dp touch area.
-                Box(Modifier.weight(t.weight).height(40.dp).testTag("store_${t.store.name.lowercase()}")) {
-                    Row(
-                        Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { state.store = t.store },
-                        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(t.icon, null, tint = tint, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(t.label, style = T.tab, color = if (sel) accent else C.Slate, maxLines = 1)
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** "Today, 8:00 pm – 10:00 pm" on the left, the delivery area with a pin on the right. 28.4 dp tall. */
-@Composable
-fun DeliveryRow(state: AppState, slot: String, ink: Color = Color.White, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth().height(28.4.dp).padding(start = 9.8.dp, end = 17.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(slot, style = T.delivery, color = ink, modifier = Modifier.weight(1f), maxLines = 1)
-        Row(Modifier.clickable { }, verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.LocationOn, null, tint = C.Accent, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(2.dp))
-            Text(state.address.line.substringAfter(", ").substringBefore(",") + ", Dubai", style = T.delivery.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
-                color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Icon(Icons.Rounded.KeyboardArrowDown, null, tint = ink, modifier = Modifier.size(18.dp))
-        }
-    }
-}
-
-/** Collapsible top of the store header: 10.9 spacer + 48 tab track + 3 gap + 28.4 delivery row. */
-val HEADER_TOP = 90.3.dp
-/** Full store header below the status bar: top part + 2.1 + 36 search + 4 + 68 chips. */
-val HEADER_FULL = 200.4.dp
-/** How far the header collapses: the top part plus the chips' icon row. */
-val HEADER_COLLAPSE = 124.3.dp
-
-private val HINTS = listOf("groceries", "fruits", "vegetables", "milk", "headphones", "laundry")
-
-/** Search field (36 dp) with a hint that types itself word by word. Opens the search screen. */
-@Composable
-fun SearchField(state: AppState, modifier: Modifier = Modifier, bg: Color = C.Surface) {
-    var typed by remember { mutableStateOf("") }
-    LaunchedEffect(Unit) {
-        var k = 0
-        while (true) {
-            val word = HINTS[k % HINTS.size]
-            for (n in 1..word.length) { typed = word.take(n); delay(110) }
-            delay(1600)
-            for (n in word.length downTo 0) { typed = word.take(n); delay(45) }
-            delay(250); k++
-        }
-    }
-    // The id sits on a plain wrapper so it reports the drawn 36 dp, not the 48 dp touch area.
-    Box(modifier.fillMaxWidth().padding(start = 10.2.dp, end = 13.8.dp).height(36.dp).testTag("search_field")) {
-        Row(
-            Modifier.fillMaxSize().background(bg, RoundedCornerShape(9.9.dp)).clip(RoundedCornerShape(9.9.dp))
-                .clickable { state.go(Route.Search()) }.padding(start = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(Icons.Rounded.Search, "Search", tint = C.Slate, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(7.dp))
-            Text("Search ", style = T.search, color = C.Hint)
-            Text("\"$typed|\"", style = T.search, color = C.Hint, maxLines = 1)
-        }
-    }
-}
-
-/** Measured widths of the source's first five chips; later chips use its rule (label + 20 dp, at least 64 dp). */
-val CHIP_WIDTHS = listOf(83.6.dp, 89.5.dp, 64.dp, 64.dp, 73.5.dp)
-
-data class Chip(val label: String, val icon: ImageVector)
-
-/** Tab-shaped chip: rounded top corners and outward flares at the bottom so it joins the page below. */
-private fun chipShape(r: Float, flare: Float) = GenericShape { size: Size, _ ->
+/** Folder-tab outline: rounded top corners, and bottom corners that flare outwards so the tab grows out of the block below it. */
+private fun folderTab(r: Float, flare: Float) = GenericShape { size: Size, _ ->
     moveTo(-flare, size.height)
     quadraticTo(0f, size.height, 0f, size.height - flare)
     lineTo(0f, r)
@@ -181,64 +104,201 @@ private fun chipShape(r: Float, flare: Float) = GenericShape { size: Size, _ ->
 }
 
 /**
- * Icon-over-label category chips (68 dp). [collapse] 0..1 shrinks them to a text-only row (34 dp) as the page scrolls.
+ * Store switcher, the first of the three tab rows: three large tabs with a pictogram over the label (70 dp).
+ * A lifted folder tab sits behind the selected store. When the store changes it springs across from where it was,
+ * stretching on the way, and the new store's pictogram pops up and settles; the phone ticks once.
  */
 @Composable
-fun ChipTabs(chips: List<Chip>, selected: Int, onSelect: (Int) -> Unit, collapse: Float, tint: Color, selBg: Color, modifier: Modifier = Modifier) {
+fun StoreTabs(state: AppState, modifier: Modifier = Modifier) {
+    val haptic = LocalHapticFeedback.current
     val density = LocalDensity.current
-    val h: Dp = 68.dp - 34.dp * collapse
-    LazyRow(modifier.fillMaxWidth().height(h), contentPadding = PaddingValues(horizontal = 10.2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-        itemsIndexed(chips) { i, c ->
-            val sel = i == selected
-            val shape = remember(density) { with(density) { chipShape(14.dp.toPx(), 9.dp.toPx()) } }
-            val w = CHIP_WIDTHS.getOrNull(i)
-            Box(
-                Modifier.height(h).then(if (w != null) Modifier.width(w) else Modifier.widthIn(min = 64.dp)).testTag("chip_$i")
-                    .then(if (sel) Modifier.background(lerp(selBg, Color(0xFFE4E4E6), collapse), if (collapse > 0.5f) RoundedCornerShape(10.dp) else shape) else Modifier)
-                    .clickable(remember { MutableInteractionSource() }, null) { onSelect(i) }
-                    .padding(horizontal = if (w != null) 0.dp else 10.dp),
-                contentAlignment = Alignment.BottomCenter,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (collapse < 0.99f) {
-                        Icon(c.icon, null, tint = lerp(tint, C.Ink, collapse), modifier = Modifier.size(30.dp * (1 - collapse)).alpha(1 - collapse))
-                        Spacer(Modifier.height(4.dp * (1 - collapse)))
-                    }
-                    Text(c.label, style = T.chip, color = C.Ink, maxLines = 1, modifier = Modifier.padding(bottom = 10.dp - 1.dp * collapse))
+    val idx = STORE_TABS.indexOfFirst { it.store == state.store }
+    // Each store page draws its own header, so the tab starts from the store that was showing before.
+    val from = remember { STORE_TABS.indexOfFirst { it.store == state.prevStore } }
+    val pos = remember { Animatable(from.toFloat()) }
+    LaunchedEffect(idx) {
+        pos.animateTo(idx.toFloat(), spring(dampingRatio = 0.72f, stiffness = 320f))
+        state.prevStore = state.store
+    }
+    BoxWithConstraints(modifier.fillMaxWidth().padding(horizontal = 8.dp).height(D.BigTabH)) {
+        val tabPx = with(density) { (maxWidth / STORE_TABS.size).toPx() }
+        val shape = remember(density) { with(density) { folderTab(18.dp.toPx(), 10.dp.toPx()) } }
+        Box(
+            Modifier.offset { IntOffset((tabPx * pos.value).roundToInt(), 0) }.width(maxWidth / STORE_TABS.size).fillMaxHeight()
+                // stretches sideways while it travels and is back to its own width when it lands
+                .graphicsLayer { scaleX = 1f + 0.14f * sin(abs(pos.value - idx).coerceAtMost(1f) * PI).toFloat() }
+                .background(C.TabLift, shape).border(1.dp, C.TabEdge, shape),
+        )
+        Row(Modifier.fillMaxSize()) {
+            STORE_TABS.forEachIndexed { i, t ->
+                val sel = i == idx
+                val lift by animateFloatAsState(if (sel) 1f else 0f, M.pop(), label = "storeLift")
+                Column(
+                    Modifier.weight(1f).fillMaxHeight().testTag("store_${t.store.name.lowercase()}")
+                        .clickable(remember { MutableInteractionSource() }, null) {
+                            if (!sel) { haptic.performHapticFeedback(HapticFeedbackType.LongPress); state.store = t.store }
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        t.icon, null, tint = Color.White,
+                        modifier = Modifier.size(30.dp).graphicsLayer {
+                            val s = 0.82f + 0.26f * lift
+                            scaleX = s; scaleY = s
+                            translationY = -3.dp.toPx() * lift
+                            rotationZ = -10f * (1f - lift)
+                            alpha = 0.72f + 0.28f * lift.coerceIn(0f, 1f)
+                        },
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(t.label, style = T.storeTab, color = Color.White, maxLines = 1,
+                        modifier = Modifier.graphicsLayer { alpha = 0.78f + 0.22f * lift.coerceIn(0f, 1f) })
                 }
             }
         }
     }
 }
 
+/** Where the order goes ("Home ›" over the street line) on the left; the delivery promise as a pill on the right. 56 dp. */
+@Composable
+fun AddressRow(state: AppState, promise: String, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth().height(D.AddrH).padding(horizontal = D.Side), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f).clickable(remember { MutableInteractionSource() }, null) { }) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.LocationOn, null, tint = C.Accent, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(state.address.label, style = T.addrLabel, color = Color.White, maxLines = 1)
+                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+            Text(state.address.line, style = T.small, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Spacer(Modifier.width(12.dp))
+        Row(
+            Modifier.height(32.dp).background(C.TabLift, RoundedCornerShape(D.R16)).border(1.dp, C.TabEdge, RoundedCornerShape(D.R16)).padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Outlined.Schedule, null, tint = C.Accent, modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(4.dp))
+            Text(promise, style = T.smallM, color = Color.White, maxLines = 1)
+        }
+    }
+}
+
+/** The part of a store header that slides away on scroll: address row + store tabs. */
+val HEADER_TOP = D.AddrH + D.BigTabH
+/** The part that stays: 8 + search field + 4 + second tab row. */
+val HEADER_PINNED = 8.dp + D.SearchTall + 4.dp + D.TextTabH
+/** Full store header below the status bar. */
+val HEADER_FULL = HEADER_TOP + HEADER_PINNED
+/** How far the header collapses. */
+val HEADER_COLLAPSE = HEADER_TOP
+
+private val HINTS = listOf("milk", "fruits", "vegetables", "headphones", "laundry", "groceries")
+
+/** Search field (56 dp). The hinted word changes every few seconds, sliding up. Opens the search screen. */
+@Composable
+fun SearchField(state: AppState, modifier: Modifier = Modifier, bg: Color = Color.White) {
+    val reduced = reducedMotion()
+    var k by remember { mutableIntStateOf(0) }
+    LaunchedEffect(reduced) { if (!reduced) while (true) { delay(2600); k = (k + 1) % HINTS.size } }
+    Box(modifier.fillMaxWidth().padding(horizontal = D.Side).height(D.SearchTall).testTag("search_field")) {
+        Row(
+            Modifier.fillMaxSize().background(bg, RoundedCornerShape(D.R16)).clip(RoundedCornerShape(D.R16))
+                .clickable { state.go(Route.Search()) }.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Rounded.Search, "Search", tint = C.Slate, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.width(10.dp))
+            Text("Search for ", style = T.search, color = C.Hint, maxLines = 1)
+            AnimatedContent(
+                k, label = "hint",
+                transitionSpec = { (slideInVertically(M.bar()) { it } + fadeIn(M.snap())) togetherWith (slideOutVertically(M.bar()) { -it } + fadeOut(M.snap())) },
+            ) { i -> Text("'${HINTS[i]}'", style = T.search, color = C.Hint, maxLines = 1) }
+        }
+    }
+}
+
+data class Chip(val label: String, val icon: ImageVector)
+
 /**
- * The collapsing store header shared by Hypermarket and Minutes. [collapsePx] is how far the page has scrolled;
- * the store tabs and delivery row (84 dp) slide away first, then the chips lose their icons (34 dp).
+ * Second tab row: a small icon and a capital label per tab with hairlines between, and one underline that springs
+ * to the selected tab, its width overshooting a little as it lands. 48 dp tall.
+ */
+@Composable
+fun TextTabs(chips: List<Chip>, selected: Int, onSelect: (Int) -> Unit, ink: Color, accent: Color, modifier: Modifier = Modifier) {
+    val haptic = LocalHapticFeedback.current
+    val scroll = rememberScrollState()
+    val bounds = remember { mutableStateMapOf<Int, Pair<Float, Float>>() }   // tab -> left and width in px, inside the row
+    val left = remember { Animatable(0f) }
+    val width = remember { Animatable(0f) }
+    val target = bounds[selected]
+    LaunchedEffect(target) {
+        if (target == null) return@LaunchedEffect
+        if (width.value == 0f) { left.snapTo(target.first); width.snapTo(target.second) }
+        else {
+            launch { left.animateTo(target.first, M.bar()) }
+            launch { width.animateTo(target.second, M.pop()) }
+            launch { scroll.animateScrollTo((target.first - 48f).roundToInt().coerceAtLeast(0), M.bar()) }
+        }
+    }
+    Row(
+        modifier.fillMaxWidth().height(D.TextTabH).horizontalScroll(scroll).padding(horizontal = 8.dp)
+            .drawBehind {
+                val h = 3.dp.toPx()
+                drawRoundRect(accent, Offset(left.value, size.height - h), Size(width.value.coerceAtLeast(0f), h), CornerRadius(h, h))
+            },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        chips.forEachIndexed { i, c ->
+            val sel = i == selected
+            val on by animateFloatAsState(if (sel) 1f else 0f, M.snap(), label = "tabOn")
+            if (i > 0) Box(Modifier.width(1.dp).height(16.dp).background(ink.copy(alpha = 0.24f)))
+            Row(
+                Modifier.fillMaxHeight().testTag("chip_$i")
+                    .onPlaced { bounds[i] = it.positionInParent().x to it.size.width.toFloat() }
+                    .clickable(remember { MutableInteractionSource() }, null) {
+                        if (!sel) { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); onSelect(i) }
+                    }
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(c.icon, null, tint = ink, modifier = Modifier.size(16.dp).graphicsLayer { val s = 1f + 0.2f * on; scaleX = s; scaleY = s; alpha = 0.78f + 0.22f * on })
+                Spacer(Modifier.width(6.dp))
+                Text(c.label.uppercase(), style = T.textTab, color = ink, maxLines = 1, modifier = Modifier.graphicsLayer { alpha = 0.78f + 0.22f * on })
+            }
+        }
+    }
+}
+
+/**
+ * The store header shared by Hypermarket and Minutes. On the store's colour: the address row and the store tabs;
+ * below them, on the lifted ground the selected tab grows out of, the search field and the second tab row.
+ * [collapsePx] is how far the page has scrolled: the address and the store tabs slide away under the status bar and
+ * the part that stays turns white, its ink dark and its underline the store's accent.
  */
 @Composable
 fun StoreHeader(
     state: AppState, collapsePx: Float, bg: Color, accent: Color, slot: String,
-    chips: List<Chip>, chip: Int, onChip: (Int) -> Unit, chipTint: Color = Color.White, chipSelBg: Color = C.CampaignSoft,
+    chips: List<Chip>, chip: Int, onChip: (Int) -> Unit,
 ) {
     val density = LocalDensity.current
-    // Measured from the status bar: tab track 10.9 dp down (tabs at +15), delivery row +62, search +92.4, chips +132.4.
     val topPx = with(density) { HEADER_TOP.toPx() }
-    val chipPx = with(density) { 34.dp.toPx() }
-    val t1 = (collapsePx / topPx).coerceIn(0f, 1f)
-    val t2 = ((collapsePx - topPx) / chipPx).coerceIn(0f, 1f)
-    val frosted = lerp(bg, Color(0xF2FFFFFF), t2)
-    Column(Modifier.fillMaxWidth().background(if (t2 > 0f) frosted else bg).statusBarsPadding().testTag("store_header")) {
-        Column(
-            Modifier.fillMaxWidth().height(HEADER_TOP * (1 - t1)).graphicsLayer { alpha = 1 - t1; translationY = -collapsePx.coerceAtMost(topPx) * 0.3f },
-        ) {
-            Spacer(Modifier.height(10.9.dp))
-            StoreTabs(state, accent)
-            Spacer(Modifier.height(3.dp))
-            DeliveryRow(state, slot)
+    val t = (collapsePx / topPx).coerceIn(0f, 1f)
+    Column(Modifier.fillMaxWidth().testTag("store_header")) {
+        Column(Modifier.fillMaxWidth().background(bg).statusBarsPadding()) {
+            Box(Modifier.fillMaxWidth().height(HEADER_TOP * (1f - t)).clipToBounds()) {
+                Column(Modifier.wrapContentHeight(align = Alignment.Bottom, unbounded = true).graphicsLayer { alpha = 1f - t }) {
+                    AddressRow(state, slot)
+                    StoreTabs(state)
+                }
+            }
         }
-        Spacer(Modifier.height(2.1.dp))
-        SearchField(state, bg = if (t2 > 0.5f) Color.White else C.Surface)
-        Spacer(Modifier.height(4.dp))
-        ChipTabs(chips, chip, onChip, t2, chipTint, chipSelBg)
+        Column(Modifier.fillMaxWidth().background(lerp(C.TabLift.compositeOver(bg), Color.White, t))) {
+            Spacer(Modifier.height(8.dp))
+            SearchField(state, bg = lerp(Color.White, C.Surface, t))
+            Spacer(Modifier.height(4.dp))
+            TextTabs(chips, chip, onChip, ink = lerp(Color.White, C.Ink, t), accent = lerp(Color.White, accent, t))
+            if (t > 0.98f) Box(Modifier.fillMaxWidth().height(1.dp).background(C.Line))
+        }
     }
 }

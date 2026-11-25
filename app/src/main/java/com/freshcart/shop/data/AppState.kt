@@ -11,7 +11,10 @@ sealed interface Route {
     data object Tabs : Route
     data class Search(val query: String = "") : Route
     data class Listing(val title: String, val dept: String? = null, val query: String? = null, val deals: Boolean = false) : Route
-    data class ProductPage(val id: String) : Route
+    /** [hero] names the card the page was opened from, so its picture can travel to the page and back. */
+    data class ProductPage(val id: String, val hero: String? = null) : Route
+    /** One department laid out as an aisle: its sections in a side rail, products beside it. [sub] is the rail position (0 = all). */
+    data class Aisle(val dept: String, val sub: Int = 0) : Route
     data object Cart : Route
     data object Checkout : Route
     data object Payment : Route
@@ -24,8 +27,18 @@ class AppState {
     // navigation
     val stack = mutableStateListOf<Route>(Route.Tabs)
     var tab by mutableStateOf(Tab.Home)
-    var store by mutableStateOf(Store.Hypermarket)
+    /** The store shown before the last switch; the store tabs start their slide from it. */
+    var prevStore by mutableStateOf(Store.Hypermarket)
+    private var storeState by mutableStateOf(Store.Hypermarket)
+    var store: Store
+        get() = storeState
+        set(value) { if (value != storeState) { prevStore = storeState; storeState = value } }
     val top: Route get() = stack.last()
+    /** The screen under any open product sheets. */
+    val base: Route get() = stack.last { it !is Route.ProductPage }
+    /** Set by a product card just before it opens its product; see [Route.ProductPage.hero]. */
+    var pendingHero: String? = null
+    fun heroOpen(key: String): Boolean = stack.any { it is Route.ProductPage && it.hero == key }
     var forward by mutableStateOf(true)
     fun go(r: Route) { forward = true; stack.add(r) }
     fun back(): Boolean = if (stack.size > 1) { forward = false; stack.removeAt(stack.lastIndex); true } else false
@@ -53,11 +66,18 @@ class AppState {
     // checkout
     var coupon by mutableStateOf<String?>(null)
     val couponValue: Double get() = when (coupon) { "SAVE10" -> 10.0; "FRESH15" -> 15.0; else -> 0.0 }
-    var slot by mutableStateOf(0)
+    /** The delivery slot the customer chose, as (day, window) indexes; null until one is picked, in the cart or at checkout. */
+    var slot by mutableStateOf<Pair<Int, Int>?>(null)
     var payment by mutableStateOf(0)
     var address by mutableStateOf(Address("Home", "Marina Walk, Dubai Marina, Dubai"))
-    val deliveryFee: Double get() = if (subtotal >= 100) 0.0 else 9.0
-    val total: Double get() = (subtotal - couponValue).coerceAtLeast(0.0) + deliveryFee + 2.0
+
+    // Fees and total: the one place both the cart and the checkout read them from, so the cart total is what is paid.
+    val freeDeliveryFrom = 100.0
+    val deliveryFeeFull = 10.0
+    val deliveryFee: Double get() = if (subtotal >= freeDeliveryFrom) 0.0 else deliveryFeeFull
+    val packagingFee = 1.0
+    val serviceFee = 2.0
+    val total: Double get() = (subtotal - couponValue).coerceAtLeast(0.0) + deliveryFee + packagingFee + serviceFee
 
     // search + history
     val recent = mutableStateListOf("milk", "bread", "headphones")
@@ -72,7 +92,7 @@ class AppState {
 
     fun placeOrder(): String {
         purchased.addAll(0, cartOrder.filter { it !in purchased })
-        cart.clear(); cartOrder.clear(); coupon = null
+        cart.clear(); cartOrder.clear(); coupon = null; slot = null
         return "DC" + (100000 + (System.currentTimeMillis() % 900000)).toString()
     }
 }

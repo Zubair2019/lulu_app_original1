@@ -89,7 +89,7 @@ import com.freshcart.shop.ui.GridSection
 import com.freshcart.shop.ui.ProductCard
 import com.freshcart.shop.ui.ProductRail
 import com.freshcart.shop.ui.PromoBanner
-import com.freshcart.shop.ui.SectionTitle
+import com.freshcart.shop.ui.SectionHeader
 import com.freshcart.shop.ui.T
 import com.freshcart.shop.ui.list
 import com.freshcart.shop.ui.open
@@ -161,25 +161,25 @@ fun DealsScreen(state: AppState) {
         TitleBar("Deals")
         LazyColumn(Modifier.fillMaxSize().testTag("deals_list"), contentPadding = PaddingValues(bottom = 150.dp)) {
             item { FlashSaleHeader(endsInMs = 6L * 3600_000 + 55 * 60_000 + 23_000) }
-            item { GridSection(state, Catalog.deals(25).filter { it.dept in setOf("grocery", "snacks", "household", "fresh", "beauty") }.take(16), open, { state.list("Flash Sale", deals = true) }, top = 0.dp) }
+            item { GridSection(state, "Flash sale", Catalog.deals(25).filter { it.dept in setOf("grocery", "snacks", "household", "fresh", "beauty") }.take(16), open, { state.list("Flash Sale", deals = true) }) }
             item { Column(Modifier.background(C.Page).padding(vertical = 12.dp)) { CouponStrip(listOf(100 to "BIG100", 50 to "MEGA50", 15 to "FRESH15")) } }
             item {
                 PromoBanner("UP TO", "60% OFF", "Travel Essentials", listOf(Color(0xFFE9F3FF), Color(0xFF9CC3F5)),
                     listOf(R.drawable.d_172, R.drawable.d_174, R.drawable.d_175), dark = true) { state.list("Travel Essentials", "fashion") }
             }
-            item { GridSection(state, Catalog.dept("fashion").sortedByDescending { it.offPercent }.take(16), open, { state.list("Travel Essentials", "fashion") }) }
+            item { GridSection(state, "Travel essentials", Catalog.dept("fashion").sortedByDescending { it.offPercent }.take(16), open, { state.list("Travel Essentials", "fashion") }) }
             item {
                 PromoBanner("GLOW", "UP", "Beauty that lasts", listOf(Color(0xFFE7D7F7), Color(0xFFC6A8EC)),
                     listOf(R.drawable.d_2, R.drawable.d_4, R.drawable.d_8), dark = true) { state.list("Beauty", "beauty") }
             }
-            item { GridSection(state, Catalog.dept("beauty").sortedByDescending { it.offPercent }.take(16), open, { state.list("Beauty", "beauty") }, bg = Color(0xFFD8C4F0)) }
+            item { GridSection(state, "Beauty", Catalog.dept("beauty").sortedByDescending { it.offPercent }.take(16), open, { state.list("Beauty", "beauty") }) }
             item {
                 PromoBanner("SAVE", "5 OFF", "Dairy & breakfast", listOf(Color(0xFF0E5A9C), Color(0xFF4FA3E8)),
                     listOf(R.drawable.p_eggs, R.drawable.p_parmesan, R.drawable.t_butter)) { state.list("Dairy & Breakfast", "fresh") }
             }
-            item { GridSection(state, Catalog.dept("fresh", "beverages").take(16), open, { state.list("Dairy & Breakfast", "fresh") }, bg = Color(0xFF2E86D6)) }
-            item { Column(Modifier.padding(top = 16.dp, bottom = 8.dp)) { SectionTitle("Today's Top Deals") } }
-            item { ProductRail(state, Catalog.deals(40).take(14), open) }
+            item { GridSection(state, "Dairy & breakfast", Catalog.dept("fresh", "beverages").take(16), open, { state.list("Dairy & Breakfast", "fresh") }) }
+            item { SectionHeader("Today's top deals") }
+            item { ProductRail(state, Catalog.deals(40).take(14), open, origin = "top-deals") }
         }
     }
 }

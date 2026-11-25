@@ -1,6 +1,10 @@
 package com.freshcart.shop.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -43,6 +47,7 @@ import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -113,29 +118,45 @@ fun Modifier.pressable(onClick: () -> Unit): Modifier {
     return this.scale(s).clickable(interactionSource = src, indication = null, onClick = onClick)
 }
 
-/** White round "+" that turns into a − qty + stepper once the item is in the cart. */
+/** How the add control is drawn: a plus on the picture, the word ADD on an aisle card, or the wide button of the product sheet. */
+enum class AddKind(val height: Dp, val closed: Dp, val open: Dp) {
+    Plus(34.dp, 34.dp, 88.dp), Word(36.dp, 64.dp, 88.dp), Large(44.dp, 112.dp, 112.dp)
+}
+
+/**
+ * Add control that opens into a − qty + stepper once the item is in the cart. The shape springs wider with a little
+ * overshoot, the fill turns to the brand colour and the count rolls. The drawn shape is [AddKind.height] tall; the
+ * touch area is 48 dp.
+ */
 @Composable
-fun AddButton(state: AppState, p: Product, modifier: Modifier = Modifier, height: Dp = 32.dp) {
+fun AddButton(state: AppState, p: Product, modifier: Modifier = Modifier, kind: AddKind = AddKind.Plus, tag: String = "add_${p.id}") {
     val q = state.qty(p.id)
+    val inCart = q > 0
     val haptic = LocalHapticFeedback.current
-    AnimatedContent(q > 0, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "add", modifier = modifier) { inCart ->
+    val w by animateDpAsState(if (inCart) kind.open else kind.closed, M.pop(), label = "addW")
+    val t by animateFloatAsState(if (inCart) 1f else 0f, M.snap(), label = "addT")   // 0 = add, 1 = stepper
+    val fill by animateColorAsState(if (inCart) C.Brand else Color.White, M.snap(), label = "addFill")
+    val shape = RoundedCornerShape(if (kind == AddKind.Word) 10.dp else D.R12)
+    val tick = { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
+    Box(modifier.height(D.Touch).width(maxOf(w, D.Touch)), contentAlignment = Alignment.CenterEnd) {
+        Box(
+            Modifier.width(w).height(kind.height).shadow(if (kind == AddKind.Plus) 3.dp else 0.dp, shape).background(fill, shape)
+                .then(if (kind == AddKind.Plus) Modifier else Modifier.border(1.dp, C.Brand, shape)),
+        )
         if (!inCart) {
-            Box(
-                Modifier.size(height).shadow(3.dp, CircleShape).background(Color.White, CircleShape)
-                    .testTag("add_${p.id}")
-                    .clickable { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); state.add(p.id) },
-                contentAlignment = Alignment.Center,
-            ) { Icon(Icons.Rounded.Add, "Add to cart", tint = C.Ink, modifier = Modifier.size(20.dp)) }
+            Box(Modifier.matchParentSize().testTag(tag).clickable(remember { MutableInteractionSource() }, null) { tick(); state.add(p.id) }) {
+                Box(Modifier.align(Alignment.CenterEnd).width(kind.closed).height(kind.height).graphicsLayer { alpha = 1f - t }, contentAlignment = Alignment.Center) {
+                    if (kind == AddKind.Plus) Icon(Icons.Rounded.Add, "Add to cart", tint = C.Ink, modifier = Modifier.size(20.dp))
+                    else Text("ADD", style = if (kind == AddKind.Large) T.button else T.smallM.copy(fontWeight = FontWeight.Bold), color = C.Brand)
+                }
+            }
         } else {
-            Row(
-                Modifier.height(height).shadow(3.dp, RoundedCornerShape(50)).background(C.Brand, RoundedCornerShape(50)),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(Modifier.size(height).clickable { state.remove(p.id) }, contentAlignment = Alignment.Center) {
+            Row(Modifier.width(w).fillMaxHeight().graphicsLayer { alpha = t }, verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f).fillMaxHeight().clickable(remember { MutableInteractionSource() }, null) { tick(); state.remove(p.id) }, contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.Remove, "Remove one", tint = Color.White, modifier = Modifier.size(18.dp))
                 }
-                Text("${state.qty(p.id)}", style = T.price, color = Color.White, modifier = Modifier.wrapContentWidth())
-                Box(Modifier.size(height).clickable { state.add(p.id) }, contentAlignment = Alignment.Center) {
+                RollingText("$q", q.toDouble(), T.price, Color.White)
+                Box(Modifier.weight(1f).fillMaxHeight().clickable(remember { MutableInteractionSource() }, null) { tick(); state.add(p.id) }, contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.Add, "Add one", tint = Color.White, modifier = Modifier.size(18.dp))
                 }
             }
@@ -143,32 +164,38 @@ fun AddButton(state: AppState, p: Product, modifier: Modifier = Modifier, height
     }
 }
 
-/** Product card used by every rail and grid: 117 dp wide, 115 dp image well, badge, + button, 2-line name, price. */
+/**
+ * Product card used by every rail and grid. No box around it: a square picture well with rounded corners, the offer
+ * badge top-left and the add control bottom-right on the picture; then the name on two lines, the pack size on its
+ * own line, and the price. 117 dp wide by default ([D.CardH] tall).
+ */
 @Composable
 fun ProductCard(state: AppState, p: Product, onOpen: (Product) -> Unit, modifier: Modifier = Modifier, width: Dp? = 117.dp) {
+    val hero = "${LocalHeroOrigin.current}-${p.id}"
     Column(
-        modifier.then(if (width != null) Modifier.width(width) else Modifier.fillMaxWidth()).background(Color.White, RoundedCornerShape(8.dp))
-            .border(1.dp, C.Line.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-            .pressable { onOpen(p) }.padding(1.dp).testTag("card_${p.id}"),
+        modifier.then(if (width != null) Modifier.width(width) else Modifier.fillMaxWidth())
+            .pressable { state.pendingHero = hero; onOpen(p) }.testTag("card_${p.id}"),
     ) {
-        Box(Modifier.fillMaxWidth().aspectRatio(0.996f).clip(RoundedCornerShape(7.dp)).background(C.Card)) {
+        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(D.R16)).background(C.Card)) {
+            // the picture travels to the product sheet and back
             Image(painterResource(p.image), p.name, contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 10.dp))
+                modifier = Modifier.hero("img-$hero", !state.heroOpen(hero)).fillMaxSize().padding(10.dp))
             if (p.offPercent > 0) {
-                // measured: white pill at the well's top-left, text 14.5 dp from the well's left and 6.9 dp from its top
                 Text("${p.offPercent}% OFF", style = T.badge.copy(lineHeight = 16.sp), color = C.OffBlue,
-                    modifier = Modifier.padding(start = 6.5.dp, top = 5.dp).background(Color.White, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 8.dp, vertical = 1.6.dp))
+                    modifier = Modifier.padding(start = 6.dp, top = 6.dp).background(Color.White, RoundedCornerShape(D.R12))
+                        .padding(horizontal = 8.dp, vertical = 2.dp))
             }
-            AddButton(state, p, Modifier.align(Alignment.BottomEnd).padding(end = 5.8.dp, bottom = 6.2.dp))
+            AddButton(state, p, Modifier.align(Alignment.BottomEnd).padding(end = 6.dp))
         }
-        // measured: name 5.5 dp under the well, 2 lines of 16 dp; price row 8.3 dp under the name, 6.6 dp to the bottom
         Text(p.name, style = T.cardName, color = C.Ink, maxLines = 2, minLines = 2, overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 5.9.dp, end = 5.9.dp, top = 5.5.dp))
-        // measured: symbol 7.3 dp in, price 1.8 dp after it, old price right after the price
-        Row(Modifier.padding(start = 6.3.dp, top = 8.3.dp, bottom = 5.6.dp), verticalAlignment = Alignment.CenterVertically) {
+            modifier = Modifier.padding(start = 2.dp, end = 2.dp, top = 7.dp))
+        // pack size on its own line, always in the same place under the name, so sizes can be compared across cards
+        // even when a long name is cut short
+        Text(p.unit, style = T.cardUnit, color = C.Ink2, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 2.dp, end = 2.dp, top = D.CardUnitGap).testTag("unit_${p.id}"))
+        Row(Modifier.padding(start = 2.dp, top = D.CardPriceGap, bottom = 4.4.dp), verticalAlignment = Alignment.CenterVertically) {
             Price(p.price, T.price, C.Ink, 9.5.dp, gap = 1.8.dp)
-            if (p.oldPrice > p.price) OldPrice(p.oldPrice)
+            if (p.oldPrice > p.price) { Spacer(Modifier.width(4.dp)); OldPrice(p.oldPrice, T.cardUnit.fontSize) }
         }
     }
 }
@@ -198,9 +225,11 @@ fun SectionTitle(title: String, modifier: Modifier = Modifier, color: Color = C.
 
 /** A horizontally scrolling rail of product cards. */
 @Composable
-fun ProductRail(state: AppState, items: List<Product>, onOpen: (Product) -> Unit, modifier: Modifier = Modifier) {
-    LazyRow(modifier, contentPadding = PaddingValues(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(items, key = { it.id }) { ProductCard(state, it, onOpen) }
+fun ProductRail(state: AppState, items: List<Product>, onOpen: (Product) -> Unit, modifier: Modifier = Modifier, origin: String = "rail") {
+    CompositionLocalProvider(LocalHeroOrigin provides origin) {
+        LazyRow(modifier, contentPadding = PaddingValues(horizontal = D.Side), horizontalArrangement = Arrangement.spacedBy(D.GridGap)) {
+            items(items, key = { it.id }) { ProductCard(state, it, onOpen) }
+        }
     }
 }
 
