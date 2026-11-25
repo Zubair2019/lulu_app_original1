@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -170,7 +171,7 @@ fun SearchScreen(state: AppState, initial: String) {
                 }
             }
         }
-        if (submitted) ViewCartPill(state, Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp))
+        if (submitted) ViewCartPill(state, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 12.dp))
     }
 }
 
@@ -269,7 +270,7 @@ fun ListingScreen(state: AppState, r: Route.Listing) {
         Box(Modifier.statusBarsPadding().padding(start = 6.dp).size(40.dp).clip(CircleShape).clickable { state.back() }, contentAlignment = Alignment.Center) {
             Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = C.Ink, modifier = Modifier.size(22.dp))
         }
-        ViewCartPill(state, Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp))
+        ViewCartPill(state, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 12.dp))
     }
 }
 

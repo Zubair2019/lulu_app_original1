@@ -282,7 +282,8 @@ fun BottomBar(state: AppState) {
 }
 
 /**
- * Floating "View cart" pill: thumbnail, title, "n items · price", chevron. 250 x 57.5 dp. It springs up when the
+ * Floating "View cart" pill: thumbnail, title, "n items · price", chevron. 200 x 48 dp, kept compact so it covers
+ * as little of the product grid as it can while staying a full 48 dp touch target. It springs up when the
  * first item is added and gives a small bump on every add; the count and the amount roll to their new values.
  */
 @Composable
@@ -293,30 +294,30 @@ fun ViewCartPill(state: AppState, modifier: Modifier = Modifier) {
     AnimatedVisibility(n > 0, enter = slideInVertically(M.pop()) { it } + fadeIn(), exit = slideOutVertically(M.bar()) { it } + fadeOut(), modifier = modifier) {
         val first = state.lines.firstOrNull()?.product
         Row(
-            Modifier.graphicsLayer { scaleX = bump.value; scaleY = bump.value }.width(250.dp).height(57.5.dp)
-                .shadow(12.dp, RoundedCornerShape(29.dp), ambientColor = Color.Black.copy(alpha = 0.3f))
-                .background(C.Glass, RoundedCornerShape(29.dp))
-                .border(1.dp, Color.White.copy(alpha = 0.8f), RoundedCornerShape(29.dp))
+            Modifier.graphicsLayer { scaleX = bump.value; scaleY = bump.value }.width(200.dp).height(D.Touch)
+                .shadow(10.dp, RoundedCornerShape(24.dp), ambientColor = Color.Black.copy(alpha = 0.3f))
+                .background(C.Glass, RoundedCornerShape(24.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.8f), RoundedCornerShape(24.dp))
                 .pressable { state.go(Route.Cart) }
-                .padding(start = 9.dp, end = 14.dp)
+                .padding(start = 8.dp, end = 10.dp)
                 .testTag("view_cart"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.size(40.dp).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
-                if (first != null) Image(painterResource(first.image), null, contentScale = ContentScale.Fit, modifier = Modifier.size(32.dp))
+            Box(Modifier.size(32.dp).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) {
+                if (first != null) Image(painterResource(first.image), null, contentScale = ContentScale.Fit, modifier = Modifier.size(26.dp))
             }
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(8.dp))
             Column(Modifier.weight(1f)) {
-                Text("View cart", style = T.viewCart, color = C.Slate)
+                Text("View cart", style = T.viewCart, color = C.Slate, maxLines = 1)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RollingText("$n item${if (n == 1) "" else "s"}", n.toDouble(), T.viewCartSub, C.Slate)
                     Text(" · ", style = T.viewCartSub, color = C.Slate)
-                    Dirham(9.dp, C.Slate)
+                    Dirham(8.dp, C.Slate)
                     Spacer(Modifier.width(2.dp))
                     RollingText(fmt(state.subtotal), state.subtotal, T.viewCartSub, C.Slate)
                 }
             }
-            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = C.Ink, modifier = Modifier.size(20.dp))
+            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = C.Ink, modifier = Modifier.size(18.dp))
         }
     }
 }
